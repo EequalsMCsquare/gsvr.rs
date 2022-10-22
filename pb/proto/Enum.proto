@@ -1,0 +1,13 @@
+syntax = "proto3";
+package pb.Enum;
+
+enum ErrCode {
+    Success = 0;
+    InvalidCredential = 1;
+}
+
+enum Gender {
+    Hidden = 0;
+    Male = 1;
+    Female = 2;
+}

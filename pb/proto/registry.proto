@@ -1,0 +1,20 @@
+syntax = "proto3";
+import "Enum.proto";
+import "01_player.proto";
+package pb.registry;
+
+message CsProto{
+    oneof payload {
+        msg.CsLogin CsLogin = 1;
+        msg.CsEcho CsEcho = 2;
+        msg.CsFastLogin CsFastLogin = 3;
+    }
+}
+
+message ScProto {
+    oneof payload {
+        msg.ScLogin ScLogin = 6000;
+        msg.ScEcho ScEcho = 6001;
+        msg.ScFastLogin ScFastLogin = 3;
+    }
+}

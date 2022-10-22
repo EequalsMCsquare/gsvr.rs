@@ -1,0 +1,29 @@
+[package]
+name = "admin"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "admin"
+path = "src/main.rs"
+
+
+
+[dependencies]
+pb = { workspace = true }
+util = { workspace = true }
+gconf = { workspace = true }
+tokio = { workspace = true }
+bytes = { workspace = true }
+tokio-util = { workspace = true }
+anyhow = { worksapce = true }
+futures = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+dialoguer = { version = "^0.10" }
+clap = { version = "4.0", features = ["derive"] }
+crossbeam = "0.8.2"

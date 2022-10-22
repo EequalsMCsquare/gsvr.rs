@@ -1,0 +1,72 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'gate'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=gate",
+                    "--package=gate"
+                ],
+                "filter": {
+                    "name": "gate",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "env": {
+                "APP_ENV": "Dev",
+                "APP_SID": "1",
+                "RUST_LOG": "trace"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'game'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=game",
+                    "--package=game"
+                ],
+                "filter": {
+                    "name": "game",
+                    "kind": "bin"
+                }
+            },
+            "env": {
+                "APP_ENV": "Dev",
+                "APP_SID": "1",
+                "RUST_LOG": "trace"
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'admin'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=admin",
+                    "--package=admin"
+                ],
+                "filter": {
+                    "name": "admin",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+    ]
+}

@@ -1,0 +1,23 @@
+syntax = "proto3";
+import "Enum.proto";
+package pb.msg;
+
+message CsFastLogin {
+    uint64 player_id = 1;
+}
+message ScFastLogin {
+    Enum.ErrCode errCode = 1;
+}
+message CsLogin {
+    string token = 1;
+}
+message ScLogin {
+    Enum.ErrCode errCode = 1;
+}
+
+message CsEcho {
+    string content = 1;
+}
+message ScEcho {
+    string reply = 1;
+}

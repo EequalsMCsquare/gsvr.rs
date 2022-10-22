@@ -1,0 +1,20 @@
+[package]
+name = "tauri-plugin-clientmgr"
+version = "0.0.0"
+authors = [ "You" ]
+description = ""
+edition = "2021"
+rust-version = "1.57"
+exclude = ["/examples", "/webview-dist", "/webview-src", "node_modules"]
+
+[dependencies]
+tauri = { version = "1.1.1" }
+thiserror = "1.0"
+serde = {workspace = true}
+serde_json = {workspace = true}
+pb = {workspace = true}
+tokio = {workspace = true}
+admin = {workspace = true}
+hashbrown = {workspace = true}
+tracing = {workspace = true}
+anyhow = { workspace = true }
