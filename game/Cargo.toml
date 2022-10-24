@@ -20,3 +20,5 @@ tower = {workspace = true}
 config = {workspace = true}
 pin-project = { workpsace = true}
 hashbrown = {workspace = true}
+async-trait = {workspace = true}
+game-core = {path = "./game-core"}

@@ -1,99 +1,51 @@
-mod ctx;
 mod proto;
-use std::fmt::Debug;
-
-pub use ctx::ChanCtx;
+use game_core::broker::{self, Broker};
+use hashbrown::HashMap;
 pub use proto::ChanProto;
+use std::fmt::Debug;
 use tokio::sync::mpsc;
-
-pub type ProtoSender = mpsc::Sender<ChanCtx>;
+pub type ChanCtx = broker::ChanCtx<proto::ChanProto, ModuleName>;
 
 #[derive(Debug, Clone)]
 pub struct Hub {
-    pub module: ModuleName,
+    pub name: ModuleName,
     pub play: mpsc::Sender<ChanCtx>,
     pub nats: mpsc::Sender<ChanCtx>,
     pub db: mpsc::Sender<ChanCtx>,
 }
 
-#[derive(Debug)]
-pub enum ModuleProto {
-    Play(ChanProto),
-    Nats(ChanProto),
-    DB(ChanProto),
-}
-
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum ModuleName {
-    #[default]
-    Uninit,
     Play,
     Nats,
     DB,
 }
 
-impl Hub {
-    pub async fn cast(&self, msg: ModuleProto) {
-        if let Err(err) = match msg {
-            ModuleProto::Play(msg) => self.play.send(ChanCtx::new_cast(msg, self.module)).await,
-            ModuleProto::Nats(msg) => self.nats.send(ChanCtx::new_cast(msg, self.module)).await,
-            ModuleProto::DB(msg) => self.db.send(ChanCtx::new_cast(msg, self.module)).await,
-        } {
-            tracing::error!("fail to cast. {}", err);
+impl Broker<proto::ChanProto, ModuleName> for Hub {
+    fn name(&self) -> ModuleName {
+        self.name
+    }
+
+    fn get_tx<'a>(
+        &'a self,
+        name: ModuleName,
+    ) -> &'a mpsc::Sender<game_core::broker::ChanCtx<proto::ChanProto, ModuleName>> {
+        match name {
+            ModuleName::Play => &self.play,
+            ModuleName::Nats => &self.nats,
+            ModuleName::DB => &self.db,
         }
     }
 
-    pub fn blocking_cast(&self, msg: ModuleProto) {
-        if let Err(err) = match msg {
-            ModuleProto::Play(msg) => self.play.blocking_send(ChanCtx::new_cast(msg, self.module)),
-            ModuleProto::Nats(msg) => self.nats.blocking_send(ChanCtx::new_cast(msg, self.module)),
-            ModuleProto::DB(msg) => self.db.blocking_send(ChanCtx::new_cast(msg, self.module)),
-        } {
-            tracing::error!("fail to cast. {}", err);
+    fn new(
+        name: ModuleName,
+        tx_map: &HashMap<ModuleName, mpsc::Sender<broker::ChanCtx<proto::ChanProto, ModuleName>>>,
+    ) -> Self {
+        Self {
+            name,
+            play: tx_map.get(&ModuleName::Play).unwrap().clone(),
+            nats: tx_map.get(&ModuleName::Nats).unwrap().clone(),
+            db: tx_map.get(&ModuleName::DB).unwrap().clone(),
         }
-    }
-
-    pub async fn call(&self, msg: ModuleProto) -> anyhow::Result<ChanProto> {
-        let ctx;
-        let rx;
-        if let Err(err) = match msg {
-            ModuleProto::Play(msg) => {
-                (ctx, rx) = ChanCtx::new_req(msg, self.module);
-                self.play.send(ctx).await
-            }
-            ModuleProto::Nats(msg) => {
-                (ctx, rx) = ChanCtx::new_req(msg, self.module);
-                self.nats.send(ctx).await
-            }
-            ModuleProto::DB(msg) => {
-                (ctx, rx) = ChanCtx::new_req(msg, self.module);
-                self.db.send(ctx).await
-            }
-        } {
-            tracing::error!("fail to request. {}", err);
-        }
-        rx.await?
-    }
-
-    pub fn blocking_call(&self, msg: ModuleProto) -> anyhow::Result<ChanProto> {
-        let ctx;
-        let rx;
-        if let Err(err) = match msg {
-            ModuleProto::Play(msg) => {
-                (ctx, rx) = ChanCtx::new_req(msg, self.module);
-                self.play.blocking_send(ctx)
-            }
-            ModuleProto::Nats(msg) => {
-                (ctx, rx) = ChanCtx::new_req(msg, self.module);
-                self.nats.blocking_send(ctx)
-            }
-            ModuleProto::DB(msg) => {
-                (ctx, rx) = ChanCtx::new_req(msg, self.module);
-                self.db.blocking_send(ctx)
-            }
-        } {
-            tracing::error!("fail to request. {}", err);
-        }
-        rx.blocking_recv()?
     }
 }

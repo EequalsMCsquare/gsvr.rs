@@ -1,18 +1,19 @@
 use tokio::sync::oneshot;
 
-use super::{ChanProto, ModuleName};
-
-pub struct ChanCtx {
-    pub payload: ChanProto,
-    pub from: ModuleName,
-    reply_chan: Option<oneshot::Sender<anyhow::Result<ChanProto>>>,
+pub struct ChanCtx<T, M>
+where
+    T: Send,
+{
+    pub payload: T,
+    pub from: M,
+    reply_chan: Option<oneshot::Sender<anyhow::Result<T>>>,
 }
 
-impl ChanCtx {
-    pub fn new_req(
-        msg: ChanProto,
-        from: ModuleName,
-    ) -> (ChanCtx, oneshot::Receiver<anyhow::Result<ChanProto>>) {
+impl<T, M> ChanCtx<T, M>
+where
+    T: Send,
+{
+    pub fn new_call(msg: T, from: M) -> (ChanCtx<T, M>, oneshot::Receiver<anyhow::Result<T>>) {
         let (tx, rx) = oneshot::channel();
         (
             Self {
@@ -24,7 +25,7 @@ impl ChanCtx {
         )
     }
 
-    pub fn new_cast(msg: ChanProto, from: ModuleName) -> ChanCtx {
+    pub fn new_cast(msg: T, from: M) -> ChanCtx<T, M> {
         Self {
             payload: msg,
             reply_chan: None,
@@ -32,7 +33,7 @@ impl ChanCtx {
         }
     }
 
-    pub fn ok(self, reply: ChanProto) {
+    pub fn ok(self, reply: T) {
         if let Some(reply_chan) = self.reply_chan {
             if let Err(_) = reply_chan.send(Ok(reply)) {
                 tracing::error!("ChanRpc fail to reply with Ok. receiver dropped");

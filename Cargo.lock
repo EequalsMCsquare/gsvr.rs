@@ -25,8 +25,10 @@ dependencies = [
  "dialoguer",
  "futures",
  "gconf",
+ "parking_lot",
  "pb",
  "serde",
+ "slice-deque",
  "tokio",
  "tokio-util",
  "tracing",
@@ -1099,8 +1101,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-nats",
+ "async-trait",
  "config",
  "futures",
+ "game-core",
  "gconf",
  "hashbrown",
  "pb",
@@ -1111,6 +1115,18 @@ dependencies = [
  "tower",
  "tracing",
  "util",
+]
+
+[[package]]
+name = "game-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "futures",
+ "hashbrown",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -1726,6 +1742,7 @@ checksum = "435011366fe56583b16cf956f9df0095b405b82d76425bc8981c0e22e60ec4df"
 dependencies = [
  "autocfg",
  "scopeguard",
+ "serde",
 ]
 
 [[package]]
@@ -1769,6 +1786,15 @@ dependencies = [
  "objc-foundation",
  "objc_id",
  "time",
+]
+
+[[package]]
+name = "mach"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b823e83b2affd8f40a9ee8c29dbc56404c1e34cd2710921f2801e2cf29527afa"
+dependencies = [
+ "libc",
 ]
 
 [[package]]
@@ -3268,6 +3294,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4614a76b2a8be0058caa9dbbaf66d988527d86d003c11a94fbd335d7661edcef"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "slice-deque"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31ef6ee280cdefba6d2d0b4b78a84a1c1a3f3a4cec98c2d4231c8bc225de0f25"
+dependencies = [
+ "libc",
+ "mach",
+ "winapi",
 ]
 
 [[package]]

@@ -2,6 +2,7 @@
 members = [
 	"gate",
 	"game",
+	"game/game-core",
 	"pb",
 	"admin",
 	"gconf",
@@ -12,6 +13,8 @@ members = [
 ]
 
 [workspace.dependencies]
+async-trait = "0.1.57"
+parking_lot = {version = "0.12", features = ['serde']}
 util = { path="./util"}
 gconf = { path = "./gconf" }
 pb = { path = "./pb" }

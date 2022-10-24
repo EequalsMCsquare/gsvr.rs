@@ -1,4 +1,4 @@
-use tokio::runtime;
+use game_core::server::ServerBuilder;
 
 mod conf;
 mod db;
@@ -6,6 +6,21 @@ mod hub;
 mod nats;
 mod play;
 
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let cfg = conf::Config::parse("etc/game")?;
+    util::init_logger(cfg.log);
+    let nats_client = util::build_nats(cfg.mq).await.unwrap();
+    ServerBuilder::new()
+        .plugin(nats::Builder::new().with_nats(nats_client))
+        .plugin(play::Builder::new())
+        .plugin(db::Builder::new())
+        .serve()
+        .await
+        .map_err(Into::into)
+}
+
+/*
 fn main() -> anyhow::Result<()> {
     let rt = runtime::Builder::new_multi_thread().enable_all().build()?;
     let cfg = conf::Config::parse("etc/game")?;
@@ -14,22 +29,20 @@ fn main() -> anyhow::Result<()> {
         let nats_client = util::build_nats(cfg.mq).await.unwrap();
         tracing::debug!("NATS init success");
         // build modules
-        let mut play = play::Module::new();
+        // let mut play = play::Module::new();
         let mut nats = nats::Module::new(nats_client);
-        let mut db = db::Module::new();
+        // let mut db = db::Module::new();
         // init ChanRpc Hub
         let h = hub::Hub {
-            play: play.chanrpc(),
-            db: db.chanrpc(),
+            play: nats.chanrpc(),
+            db: nats.chanrpc(),
             nats: nats.chanrpc(),
-            module: hub::ModuleName::default(),
+            name: Default::default()
         };
-
         // set modules hub
-        play.with_hub(h.clone());
+        // play.with_hub(h.clone());
         nats.with_hub(h.clone());
-        db.with_hub(h.clone());
-
+        // db.with_hub(h.clone());
         // spawn module future 顺序不能错
         let nats_handle = rt.spawn(async move {
             if let Err(err) = nats.init().await {
@@ -38,18 +51,16 @@ fn main() -> anyhow::Result<()> {
             tracing::info!("Nats module init success");
             nats.run().await
         });
-
         // let db_handle = tokio::spawn(db);
-        if let Err(err) = play.init().await {
-            panic!("Play module init fail. {}", err);
-        }
+        // if let Err(err) = play.init().await {
+        //     panic!("Play module init fail. {}", err);
+        // }
         tracing::info!("Play module init success");
-        std::thread::spawn(move || {
-            if let Err(err) = play.run() {
-                tracing::error!("error occur while running play module. {}", err);
-            }
-        });
-
+        // std::thread::spawn(move || {
+        //     if let Err(err) = play.run() {
+        //         tracing::error!("error occur while running play module. {}", err);
+        //     }
+        // });
         let (nats_ret) = tokio::join! {
             nats_handle,
             // db_handle
@@ -57,3 +68,4 @@ fn main() -> anyhow::Result<()> {
     });
     Ok(())
 }
+ */

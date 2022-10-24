@@ -1,9 +1,8 @@
-use super::player;
-use crate::play::Module;
+use super::{player, PlayPlugin};
 use anyhow::anyhow;
 
-impl Module {
-    pub fn handle_player_msg(&mut self, player_id: u64, msg: pb::CsMsg) {
+impl PlayPlugin {
+    pub fn handle_pmsg(&self, player_id: u64, msg: pb::CsMsg) {
         let mut players = self.players.borrow_mut();
         let player_ref;
         if let Some(player_model) = players.get_player(player_id) {
