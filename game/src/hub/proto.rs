@@ -1,3 +1,5 @@
+use crate::error::Result;
+use mongodb::bson;
 use std::fmt::Debug;
 
 pub enum ChanProto {
@@ -19,6 +21,12 @@ pub enum ChanProto {
         topic: String,
         decode_fn: fn(async_nats::Message) -> anyhow::Result<ChanProto>,
     },
+    DBLoadReq {
+        coll: String,
+        filter: Option<bson::Document>,
+        options: Option<mongodb::options::FindOneOptions>,
+    },
+    DBLoadAck(Result<bson::Binary>),
     Sub2HubAck,
 }
 
@@ -45,6 +53,12 @@ impl Debug for ChanProto {
                 // .field("decode_fn", decode_fn)
                 .finish(),
             ChanProto::Sub2HubAck => write!(f, "Sub2HubAck"),
+            ChanProto::DBLoadReq {
+                coll,
+                filter,
+                options,
+            } => todo!(),
+            ChanProto::DBLoadAck(res) => todo!(),
         }
     }
 }

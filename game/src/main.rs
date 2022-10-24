@@ -5,6 +5,7 @@ mod db;
 mod hub;
 mod nats;
 mod play;
+mod error;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -14,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
     ServerBuilder::new()
         .plugin(nats::Builder::new().with_nats(nats_client))
         .plugin(play::Builder::new())
-        .plugin(db::Builder::new())
+        .plugin(db::Builder::new(todo!()))
         .serve()
         .await
         .map_err(Into::into)

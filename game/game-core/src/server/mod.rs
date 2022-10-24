@@ -1,4 +1,4 @@
-use futures::{Future, FutureExt};
+use futures::{ready, Future, FutureExt};
 use hashbrown::HashSet;
 
 use crate::plugin::PluginJoinHandle;
@@ -8,7 +8,7 @@ pub use builder::ServerBuilder;
 
 pub struct Server<NameEnum, Error> {
     registered_plugins: HashSet<NameEnum>,
-    plugin_join_handles: Vec<PluginJoinHandle<Error>>
+    plugin_join_handles: Vec<PluginJoinHandle<Error>>,
 }
 
 impl<NameEnum, Error> Future for Server<NameEnum, Error> {
@@ -19,6 +19,10 @@ impl<NameEnum, Error> Future for Server<NameEnum, Error> {
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Self::Output> {
         let mut ctrl_c_future = Box::pin(tokio::signal::ctrl_c());
-        ctrl_c_future.poll_unpin(cx)
+        // todo: reversely send close signal and wait for handles to join
+        match ready!(ctrl_c_future.poll_unpin(cx)) {
+            Ok(_) => todo!(),
+            Err(_) => todo!(),
+        }
     }
 }

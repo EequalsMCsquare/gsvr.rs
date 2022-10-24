@@ -1,4 +1,6 @@
 mod builder;
+mod item;
+mod item_mgr;
 mod handler;
 mod player;
 mod player_mgr;

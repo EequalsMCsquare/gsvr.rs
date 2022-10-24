@@ -28,6 +28,7 @@ impl PlayPlugin {
         }
     }
 
+    #[allow(non_snake_case)]
     fn on_CsEcho(&self, player: &player::Model, msg: pb::CsEcho) -> anyhow::Result<()> {
         let resp = pb::ScMsg::ScEcho(pb::ScEcho {
             reply: format!("you said: {}", msg.content),

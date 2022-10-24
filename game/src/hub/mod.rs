@@ -8,10 +8,10 @@ pub type ChanCtx = broker::ChanCtx<proto::ChanProto, ModuleName>;
 
 #[derive(Debug, Clone)]
 pub struct Hub {
-    pub name: ModuleName,
-    pub play: mpsc::Sender<ChanCtx>,
-    pub nats: mpsc::Sender<ChanCtx>,
-    pub db: mpsc::Sender<ChanCtx>,
+    name: ModuleName,
+    play: mpsc::Sender<ChanCtx>,
+    nats: mpsc::Sender<ChanCtx>,
+    db: mpsc::Sender<ChanCtx>,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]

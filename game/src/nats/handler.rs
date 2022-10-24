@@ -2,10 +2,11 @@ use anyhow::anyhow;
 use futures::StreamExt;
 use game_core::broker::Broker;
 
-use crate::hub::{ModuleName, ChanProto};
+use crate::hub::{ChanProto, ModuleName};
 
 use super::NatsPlugin;
 
+#[allow(non_snake_case)]
 impl NatsPlugin {
     pub(super) async fn on_Sub2HubReq(
         &self,
@@ -36,4 +37,3 @@ impl NatsPlugin {
         Ok(())
     }
 }
-

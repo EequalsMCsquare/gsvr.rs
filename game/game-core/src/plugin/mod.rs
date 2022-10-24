@@ -1,8 +1,7 @@
 use crate::broker;
-use async_trait::async_trait;
 use tokio::sync::mpsc;
 mod builder;
-pub use builder::{Builder, PluginBuilder};
+pub use builder::PluginBuilder;
 
 pub enum PluginJoinHandle<Error> {
     TokioHandle(tokio::task::JoinHandle<Result<(), Error>>),

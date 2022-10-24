@@ -1,5 +1,5 @@
 #[derive(Debug)]
-pub struct SubModel{
+pub struct SubModel {
     pub(super) name: String,
     pub(super) level: u32,
     pub(super) exp: u64,
