@@ -13,8 +13,10 @@ where
     NameEnum: Send,
     Proto: Send,
 {
+    type BrkrError: Send;
+
     fn name(&self) -> NameEnum;
-    fn channel(&self) -> mpsc::Sender<broker::ChanCtx<Proto, NameEnum>>;
+    fn channel(&self) -> mpsc::Sender<broker::ChanCtx<Proto, NameEnum, Self::BrkrError>>;
     fn init(&mut self) -> anyhow::Result<()> {
         Ok(())
     }

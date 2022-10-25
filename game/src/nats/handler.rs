@@ -1,8 +1,7 @@
-use anyhow::anyhow;
 use futures::StreamExt;
 use game_core::broker::Broker;
 
-use crate::hub::{ChanProto, ModuleName};
+use crate::{hub::{ChanProto, ModuleName}, error::{Result, Error}};
 
 use super::NatsPlugin;
 
@@ -13,7 +12,7 @@ impl NatsPlugin {
         from: ModuleName,
         topic: String,
         decode_fn: fn(async_nats::Message) -> anyhow::Result<ChanProto>,
-    ) -> anyhow::Result<()> {
+    ) -> Result<()> {
         match self.nats.subscribe(topic).await {
             Ok(mut sub) => {
                 let func = decode_fn;
@@ -32,7 +31,7 @@ impl NatsPlugin {
                     }
                 });
             }
-            Err(err) => return Err(anyhow!("{}", err.to_string())),
+            Err(err) => return Err(Error::NatsSub(err)),
         }
         Ok(())
     }

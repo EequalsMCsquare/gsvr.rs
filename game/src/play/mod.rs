@@ -4,7 +4,7 @@ mod item_mgr;
 mod handler;
 mod player;
 mod player_mgr;
-use crate::hub::{ChanCtx, ChanProto, Hub, ModuleName};
+use crate::{hub::{ChanCtx, ChanProto, Hub, ModuleName}, error::Error};
 use anyhow::{anyhow, bail};
 pub use builder::Builder;
 use game_core::{
@@ -25,11 +25,12 @@ pub struct PlayPlugin {
 }
 
 impl Plugin<ModuleName, ChanProto> for PlayPlugin {
+    type BrkrError = Error;
     fn name(&self) -> ModuleName {
         ModuleName::Play
     }
 
-    fn channel(&self) -> mpsc::Sender<game_core::broker::ChanCtx<ChanProto, ModuleName>> {
+    fn channel(&self) -> mpsc::Sender<ChanCtx> {
         self.hub.get_tx(self.name()).clone()
     }
 

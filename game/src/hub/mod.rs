@@ -4,7 +4,10 @@ use hashbrown::HashMap;
 pub use proto::ChanProto;
 use std::fmt::Debug;
 use tokio::sync::mpsc;
-pub type ChanCtx = broker::ChanCtx<proto::ChanProto, ModuleName>;
+
+use crate::error::Error;
+
+pub type ChanCtx = broker::ChanCtx<proto::ChanProto, ModuleName, crate::error::Error>;
 
 #[derive(Debug, Clone)]
 pub struct Hub {
@@ -22,6 +25,7 @@ pub enum ModuleName {
 }
 
 impl Broker<proto::ChanProto, ModuleName> for Hub {
+    type Error = Error;
     fn name(&self) -> ModuleName {
         self.name
     }
@@ -29,7 +33,7 @@ impl Broker<proto::ChanProto, ModuleName> for Hub {
     fn get_tx<'a>(
         &'a self,
         name: ModuleName,
-    ) -> &'a mpsc::Sender<game_core::broker::ChanCtx<proto::ChanProto, ModuleName>> {
+    ) -> &'a mpsc::Sender<ChanCtx> {
         match name {
             ModuleName::Play => &self.play,
             ModuleName::Nats => &self.nats,
@@ -39,7 +43,7 @@ impl Broker<proto::ChanProto, ModuleName> for Hub {
 
     fn new(
         name: ModuleName,
-        tx_map: &HashMap<ModuleName, mpsc::Sender<broker::ChanCtx<proto::ChanProto, ModuleName>>>,
+        tx_map: &HashMap<ModuleName, mpsc::Sender<ChanCtx>>,
     ) -> Self {
         Self {
             name,

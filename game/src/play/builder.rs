@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use game_core::plugin::{Plugin, PluginBuilder};
 use tokio::sync::mpsc;
 
-use crate::hub::{ChanCtx, ChanProto, Hub, ModuleName};
+use crate::{hub::{ChanCtx, ChanProto, Hub, ModuleName}, error::Error};
 
 use super::{player_mgr::PlayerMgr, PlayPlugin};
 
@@ -14,7 +14,8 @@ pub struct Builder {
 }
 
 impl PluginBuilder<ModuleName, ChanProto, Hub> for Builder {
-    fn build(self: Box<Self>) -> Box<dyn Plugin<ModuleName, ChanProto>> {
+    type BrkrError = Error;
+    fn build(self: Box<Self>) -> Box<dyn Plugin<ModuleName, ChanProto, BrkrError =  Self::BrkrError>> {
         Box::new(PlayPlugin {
             players: RefCell::new(PlayerMgr::new()),
             rx: self.rx.unwrap(),
@@ -26,7 +27,7 @@ impl PluginBuilder<ModuleName, ChanProto, Hub> for Builder {
         self.name
     }
 
-    fn set_rx(&mut self, rx: mpsc::Receiver<game_core::broker::ChanCtx<ChanProto, ModuleName>>) {
+    fn set_rx(&mut self, rx: mpsc::Receiver<ChanCtx>) {
         self.rx = Some(rx)
     }
 

@@ -1,26 +1,36 @@
-use anyhow::bail;
 use async_trait::async_trait;
 use hashbrown::HashMap;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, oneshot};
 mod ctx;
+
 pub use ctx::ChanCtx;
 
 #[async_trait]
-pub trait Broker<T, M>
+pub trait Broker<Proto, NameEnum>
 where
-    M: Send,
-    T: Send,
+    NameEnum: Send,
+    Proto: Send,
 {
-    fn new(name: M, tx_map: &HashMap<M, mpsc::Sender<ChanCtx<T, M>>>) -> Self;
+    type Error: Send
+        + From<oneshot::error::RecvError>
+        + From<mpsc::error::SendError<ChanCtx<Proto, NameEnum, Self::Error>>>;
 
-    fn name(&self) -> M;
+    fn new(
+        name: NameEnum,
+        tx_map: &HashMap<NameEnum, mpsc::Sender<ChanCtx<Proto, NameEnum, Self::Error>>>,
+    ) -> Self;
 
-    fn get_tx<'a>(&'a self, name: M) -> &'a mpsc::Sender<ChanCtx<T, M>>;
+    fn name(&self) -> NameEnum;
 
-    async fn cast<'a>(&'a self, to: M, msg: T)
+    fn get_tx<'a>(
+        &'a self,
+        name: NameEnum,
+    ) -> &'a mpsc::Sender<ChanCtx<Proto, NameEnum, Self::Error>>;
+
+    async fn cast<'a>(&'a self, to: NameEnum, msg: Proto)
     where
-        T: 'a,
-        M: 'a,
+        Proto: 'a,
+        NameEnum: 'a,
     {
         let chan = self.get_tx(to);
         if let Err(err) = chan.send(ChanCtx::new_cast(msg, self.name())).await {
@@ -28,33 +38,33 @@ where
         }
     }
 
-    fn blocking_cast(&self, to: M, msg: T) {
+    fn blocking_cast(&self, to: NameEnum, msg: Proto) {
         let chan = self.get_tx(to);
         if let Err(err) = chan.blocking_send(ChanCtx::new_cast(msg, self.name())) {
             tracing::error!("fail to cast. {}", err)
         }
     }
 
-    async fn call<'a>(&'a self, to: M, msg: T) -> anyhow::Result<T>
+    async fn call<'a>(&'a self, to: NameEnum, msg: Proto) -> Result<Proto, Self::Error>
     where
-        T: 'a,
-        M: 'a,
+        Proto: 'a,
+        NameEnum: 'a,
     {
         let (ctx, rx) = ChanCtx::new_call(msg, self.name());
         let chan = self.get_tx(to);
         if let Err(err) = chan.send(ctx).await {
             tracing::error!("fail to request. {}", err);
-            bail!(err.to_string())
+            return Err(Self::Error::from(err));
         }
-        rx.await?
+        rx.await.map_err(|err| Self::Error::from(err))?
     }
 
-    fn blocking_call(&self, to: M, msg: T) -> anyhow::Result<T> {
+    fn blocking_call(&self, to: NameEnum, msg: Proto) -> Result<Proto, Self::Error> {
         let (ctx, rx) = ChanCtx::new_call(msg, self.name());
         let chan = self.get_tx(to);
         if let Err(err) = chan.blocking_send(ctx) {
             tracing::error!("fail to request. {}", err);
-            bail!(err.to_string())
+            return Err(Self::Error::from(err));
         }
         rx.blocking_recv()?
     }

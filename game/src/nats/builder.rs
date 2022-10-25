@@ -1,10 +1,10 @@
-use crate::hub::{ChanProto, Hub, ModuleName};
-use game_core::{broker::ChanCtx, plugin::PluginBuilder};
+use crate::{hub::{ChanProto, Hub, ModuleName, ChanCtx}, error::Error};
+use game_core::{plugin::PluginBuilder};
 use tokio::sync::mpsc;
 
 pub struct Builder {
     name: ModuleName,
-    rx: Option<mpsc::Receiver<ChanCtx<ChanProto, ModuleName>>>,
+    rx: Option<mpsc::Receiver<ChanCtx>>,
     nats: Option<async_nats::Client>,
     brkr: Option<Hub>,
 }
@@ -17,7 +17,9 @@ impl Builder {
 }
 
 impl PluginBuilder<ModuleName, ChanProto, Hub> for Builder {
-    fn build(self: Box<Self>) -> Box<dyn game_core::plugin::Plugin<ModuleName, ChanProto>> {
+
+    type BrkrError = Error;
+    fn build(self: Box<Self>) -> Box<dyn game_core::plugin::Plugin<ModuleName, ChanProto, BrkrError = Self::BrkrError>> {
         Box::new(super::NatsPlugin {
             nats: self.nats.unwrap(),
             hub: self.brkr.unwrap(),
@@ -29,7 +31,7 @@ impl PluginBuilder<ModuleName, ChanProto, Hub> for Builder {
     }
     fn set_rx(
         &mut self,
-        rx: tokio::sync::mpsc::Receiver<game_core::broker::ChanCtx<ChanProto, ModuleName>>,
+        rx: tokio::sync::mpsc::Receiver<ChanCtx>,
     ) {
         self.rx = Some(rx);
     }

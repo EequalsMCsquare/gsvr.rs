@@ -18,7 +18,7 @@ where
     Brkr: Broker<Proto, NameEnum>,
 {
     plugin_set: HashSet<NameEnum>,
-    plugin_builders: Vec<Box<dyn PluginBuilder<NameEnum, Proto, Brkr>>>,
+    plugin_builders: Vec<Box<dyn PluginBuilder<NameEnum, Proto, Brkr, BrkrError = Brkr::Error>>>,
 }
 
 impl<NameEnum, Proto, Brkr> ServerBuilder<NameEnum, Proto, Brkr>
@@ -36,7 +36,7 @@ where
 
     pub fn plugin<PB>(mut self, plugin_builder: PB) -> Self
     where
-        PB: PluginBuilder<NameEnum, Proto, Brkr> + 'static,
+        PB: PluginBuilder<NameEnum, Proto, Brkr, BrkrError = Brkr::Error> + 'static,
     {
         if let Some(_) = self.plugin_set.get(&plugin_builder.name()) {
             panic!("plugin[{:?}] already registered", plugin_builder.name());
@@ -54,8 +54,8 @@ where
         let mut broker_map: HashMap<
             NameEnum,
             (
-                mpsc::Sender<ChanCtx<Proto, NameEnum>>,
-                mpsc::Receiver<ChanCtx<Proto, NameEnum>>,
+                mpsc::Sender<ChanCtx<Proto, NameEnum, Brkr::Error>>,
+                mpsc::Receiver<ChanCtx<Proto, NameEnum, Brkr::Error>>,
             ),
         > = self
             .plugin_builders
@@ -64,7 +64,7 @@ where
             .collect();
         tracing::debug!("broker map: {:?}", broker_map);
         // set up plugins
-        let tx_map: HashMap<NameEnum, mpsc::Sender<ChanCtx<Proto, NameEnum>>> = broker_map
+        let tx_map: HashMap<NameEnum, mpsc::Sender<ChanCtx<Proto, NameEnum, Brkr::Error>>> = broker_map
             .iter()
             .map(|(k, (tx, _))| (k.clone(), tx.clone()))
             .collect();
@@ -85,7 +85,10 @@ where
                 plugin.run()
             })
             .collect();
-        tracing::info!("all plugins launch complete, running: {:?}", self.plugin_set);
+        tracing::info!(
+            "all plugins launch complete, running: {:?}",
+            self.plugin_set
+        );
 
         Server {
             registered_plugins: self.plugin_set,

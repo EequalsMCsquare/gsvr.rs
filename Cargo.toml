@@ -9,23 +9,23 @@ members = [
 	"util",
 	"admin-ui/src-tauri",
 	"admin-ui/plugins/tauri-plugin-clientmgr",
-	"admin-ui/plugins/tauri-plugin-pbhint"
+	"admin-ui/plugins/tauri-plugin-pbhint",
 ]
 
 [workspace.dependencies]
 async-trait = "0.1.57"
-parking_lot = {version = "0.12", features = ['serde']}
-util = { path="./util"}
+parking_lot = { version = "0.12", features = ['serde'] }
+util = { path = "./util" }
 gconf = { path = "./gconf" }
 pb = { path = "./pb" }
-admin = { path = "./admin"}
+admin = { path = "./admin" }
 tokio = { version = "1", features = ["full"] }
-tokio-util ={ version = "^0.7"}
+tokio-util = { version = "^0.7" }
 bytes = "1.2"
 pin-project = "1"
-serde ={ version = "*", features = ["derive"]}
+serde = { version = "*", features = ["derive"] }
 anyhow = "1"
-tracing = {version = "0.1.30"}
+tracing = { version = "0.1.30" }
 async-nats = "0.20"
 futures = "0.3"
 tower = "0.4"
@@ -34,5 +34,7 @@ config = { version = "0.13" }
 hashbrown = "0.12"
 serde_json = "1.0"
 strum = { version = "0.24", features = ["derive"] }
-num_enum = {version = "0.5.7"}
+num_enum = { version = "0.5.7" }
 slice-deque = "0.3.0"
+thiserror = "1.0"
+mongodb = { version = "2.3", features = ["tokio-runtime", "bson-serde_with"] }

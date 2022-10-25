@@ -1,28 +1,28 @@
 use anyhow::anyhow;
 use game_core::{
-    broker::{self, Broker},
-    plugin::{Plugin, PluginJoinHandle},
+    plugin::{Plugin, PluginJoinHandle}, broker::Broker,
 };
 use pb::Message;
 use tokio::sync::mpsc;
 mod builder;
 mod handler;
-use crate::hub::{ChanProto, Hub, ModuleName};
+use crate::{hub::{ChanProto, Hub, ModuleName, ChanCtx}, error::Error};
 pub use builder::Builder;
 
 pub struct NatsPlugin {
     nats: async_nats::Client,
     hub: Hub,
-    rx: mpsc::Receiver<broker::ChanCtx<ChanProto, ModuleName>>,
+    rx: mpsc::Receiver<ChanCtx>,
 }
 
 impl Plugin<ModuleName, ChanProto> for NatsPlugin {
-    
+    type BrkrError = Error;
+
     fn name(&self) -> ModuleName {
         ModuleName::Nats
     }
 
-    fn channel(&self) -> mpsc::Sender<game_core::broker::ChanCtx<ChanProto, ModuleName>> {
+    fn channel(&self) -> mpsc::Sender<ChanCtx> {
         self.hub.get_tx(self.name()).clone()
     }
 
@@ -48,7 +48,7 @@ impl Plugin<ModuleName, ChanProto> for NatsPlugin {
                         ChanProto::SubTopicReq { topic } => {
                             match self.nats.subscribe(topic.clone()).await {
                                 Ok(sub) => req.ok(ChanProto::SubTopicAck { subscriber: sub }),
-                                Err(err) => req.err(anyhow!("{}", err.to_string())),
+                                Err(err) => req.err(Error::NatsSub(err)),
                             }
                         }
                         ChanProto::Sub2HubReq { topic, decode_fn } => {
