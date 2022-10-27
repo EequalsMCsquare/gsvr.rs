@@ -9,7 +9,7 @@ use anyhow::{anyhow, bail};
 pub use builder::Builder;
 use game_core::{
     broker::Broker,
-    plugin::{Plugin, PluginJoinHandle},
+    component::{Component, ComponentJoinHandle},
 };
 use pb::Message;
 use pin_project::pin_project;
@@ -24,7 +24,7 @@ pub struct PlayPlugin {
     hub: Hub,
 }
 
-impl Plugin<ModuleName, ChanProto> for PlayPlugin {
+impl Component<ModuleName, ChanProto> for PlayPlugin {
     type BrkrError = Error;
     fn name(&self) -> ModuleName {
         ModuleName::Play
@@ -34,8 +34,8 @@ impl Plugin<ModuleName, ChanProto> for PlayPlugin {
         self.hub.get_tx(self.name()).clone()
     }
 
-    fn run(mut self: Box<Self>) -> PluginJoinHandle<anyhow::Error> {
-        PluginJoinHandle::ThreadHandle(std::thread::spawn(move || loop {
+    fn run(mut self: Box<Self>) -> ComponentJoinHandle<anyhow::Error> {
+        ComponentJoinHandle::ThreadHandle(std::thread::spawn(move || loop {
             match self.rx.blocking_recv() {
                 Some(req) => self.handle_chanproto(req),
                 None => return Err(anyhow!("[play] no ProtoSender left")),

@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use game_core::plugin::{Plugin, PluginBuilder};
+use game_core::component::{Component, ComponentBuilder};
 use tokio::sync::mpsc;
 
 use crate::{hub::{ChanCtx, ChanProto, Hub, ModuleName}, error::Error};
@@ -13,9 +13,9 @@ pub struct Builder {
     brkr: Option<Hub>,
 }
 
-impl PluginBuilder<ModuleName, ChanProto, Hub> for Builder {
+impl ComponentBuilder<ModuleName, ChanProto, Hub> for Builder {
     type BrkrError = Error;
-    fn build(self: Box<Self>) -> Box<dyn Plugin<ModuleName, ChanProto, BrkrError =  Self::BrkrError>> {
+    fn build(self: Box<Self>) -> Box<dyn Component<ModuleName, ChanProto, BrkrError =  Self::BrkrError>> {
         Box::new(PlayPlugin {
             players: RefCell::new(PlayerMgr::new()),
             rx: self.rx.unwrap(),

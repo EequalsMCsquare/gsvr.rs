@@ -1,12 +1,12 @@
 use std::{fmt::Debug, hash::Hash};
 
 use hashbrown::{HashMap, HashSet};
-use plugin::PluginBuilder;
+use component::ComponentBuilder;
 use tokio::sync::mpsc;
 
 use crate::{
     broker::{self, Broker, ChanCtx},
-    plugin::{self, PluginJoinHandle},
+    component::{self, ComponentJoinHandle},
 };
 
 use super::Server;
@@ -18,7 +18,7 @@ where
     Brkr: Broker<Proto, NameEnum>,
 {
     plugin_set: HashSet<NameEnum>,
-    plugin_builders: Vec<Box<dyn PluginBuilder<NameEnum, Proto, Brkr, BrkrError = Brkr::Error>>>,
+    plugin_builders: Vec<Box<dyn ComponentBuilder<NameEnum, Proto, Brkr, BrkrError = Brkr::Error>>>,
 }
 
 impl<NameEnum, Proto, Brkr> ServerBuilder<NameEnum, Proto, Brkr>
@@ -34,9 +34,9 @@ where
         }
     }
 
-    pub fn plugin<PB>(mut self, plugin_builder: PB) -> Self
+    pub fn component<PB>(mut self, plugin_builder: PB) -> Self
     where
-        PB: PluginBuilder<NameEnum, Proto, Brkr, BrkrError = Brkr::Error> + 'static,
+        PB: ComponentBuilder<NameEnum, Proto, Brkr, BrkrError = Brkr::Error> + 'static,
     {
         if let Some(_) = self.plugin_set.get(&plugin_builder.name()) {
             panic!("plugin[{:?}] already registered", plugin_builder.name());
@@ -48,9 +48,9 @@ where
 
     pub fn serve<Error>(self) -> Server<NameEnum, Error>
     where
-        Vec<PluginJoinHandle<Error>>: FromIterator<PluginJoinHandle<anyhow::Error>>,
+        Vec<ComponentJoinHandle<Error>>: FromIterator<ComponentJoinHandle<anyhow::Error>>,
     {
-        let join_handles: Vec<PluginJoinHandle<Error>>;
+        let join_handles: Vec<ComponentJoinHandle<Error>>;
         let mut broker_map: HashMap<
             NameEnum,
             (

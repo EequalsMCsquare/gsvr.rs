@@ -1,8 +1,8 @@
-use super::{Plugin};
+use super::{Component};
 use crate::broker::{self, Broker};
 use tokio::sync::mpsc;
 
-pub trait PluginBuilder<NameEnum, Proto, Brkr>
+pub trait ComponentBuilder<NameEnum, Proto, Brkr>
 where
     NameEnum: Send,
     Proto: Send,
@@ -10,7 +10,7 @@ where
 {
     type BrkrError: Send;
 
-    fn build(self: Box<Self>) -> Box<dyn Plugin<NameEnum, Proto, BrkrError = Self::BrkrError>>;
+    fn build(self: Box<Self>) -> Box<dyn Component<NameEnum, Proto, BrkrError = Self::BrkrError>>;
     fn name(&self) -> NameEnum;
     fn set_rx(&mut self, rx: mpsc::Receiver<broker::ChanCtx<Proto, NameEnum, Self::BrkrError>>);
     fn set_broker(&mut self, broker: Brkr);

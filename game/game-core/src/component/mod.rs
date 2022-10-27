@@ -1,14 +1,14 @@
 use crate::broker;
 use tokio::sync::mpsc;
 mod builder;
-pub use builder::PluginBuilder;
+pub use builder::ComponentBuilder;
 
-pub enum PluginJoinHandle<Error> {
+pub enum ComponentJoinHandle<Error> {
     TokioHandle(tokio::task::JoinHandle<Result<(), Error>>),
     ThreadHandle(std::thread::JoinHandle<Result<(), Error>>),
 }
 
-pub trait Plugin<NameEnum, Proto>
+pub trait Component<NameEnum, Proto>
 where
     NameEnum: Send,
     Proto: Send,
@@ -20,5 +20,5 @@ where
     fn init(&mut self) -> anyhow::Result<()> {
         Ok(())
     }
-    fn run(self: Box<Self>) -> PluginJoinHandle<anyhow::Error>;
+    fn run(self: Box<Self>) -> ComponentJoinHandle<anyhow::Error>;
 }

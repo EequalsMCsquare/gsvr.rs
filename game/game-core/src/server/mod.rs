@@ -1,14 +1,14 @@
 use futures::{ready, Future, FutureExt};
 use hashbrown::HashSet;
 
-use crate::plugin::PluginJoinHandle;
+use crate::component::ComponentJoinHandle;
 
 mod builder;
 pub use builder::ServerBuilder;
 
 pub struct Server<NameEnum, Error> {
     registered_plugins: HashSet<NameEnum>,
-    plugin_join_handles: Vec<PluginJoinHandle<Error>>,
+    plugin_join_handles: Vec<ComponentJoinHandle<Error>>,
 }
 
 impl<NameEnum, Error> Future for Server<NameEnum, Error> {

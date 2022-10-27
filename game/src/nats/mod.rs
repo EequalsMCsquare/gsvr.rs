@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use game_core::{
-    plugin::{Plugin, PluginJoinHandle}, broker::Broker,
+    component::{Component, ComponentJoinHandle}, broker::Broker,
 };
 use pb::Message;
 use tokio::sync::mpsc;
@@ -15,7 +15,7 @@ pub struct NatsPlugin {
     rx: mpsc::Receiver<ChanCtx>,
 }
 
-impl Plugin<ModuleName, ChanProto> for NatsPlugin {
+impl Component<ModuleName, ChanProto> for NatsPlugin {
     type BrkrError = Error;
 
     fn name(&self) -> ModuleName {
@@ -26,8 +26,8 @@ impl Plugin<ModuleName, ChanProto> for NatsPlugin {
         self.hub.get_tx(self.name()).clone()
     }
 
-    fn run(mut self: Box<Self>) -> PluginJoinHandle<anyhow::Error> {
-        PluginJoinHandle::TokioHandle(tokio::spawn(async move {
+    fn run(mut self: Box<Self>) -> ComponentJoinHandle<anyhow::Error> {
+        ComponentJoinHandle::TokioHandle(tokio::spawn(async move {
             let mut msg = pb::ScProto::default();
             loop {
                 match self.rx.recv().await {

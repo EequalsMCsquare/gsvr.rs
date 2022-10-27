@@ -13,9 +13,9 @@ async fn main() -> anyhow::Result<()> {
     util::init_logger(cfg.log);
     let nats_client = util::build_nats(cfg.mq).await.unwrap();
     ServerBuilder::new()
-        .plugin(nats::Builder::new().with_nats(nats_client))
-        .plugin(play::Builder::new())
-        .plugin(db::Builder::new(todo!()))
+        .component(nats::Builder::new().with_nats(nats_client))
+        .component(play::Builder::new())
+        .component(db::Builder::new(todo!()))
         .serve()
         .await
         .map_err(Into::into)

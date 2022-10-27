@@ -1,7 +1,7 @@
-use game_core::plugin::{PluginBuilder, Plugin};
+use game_core::component::{Component, ComponentBuilder};
 use tokio::sync::mpsc;
 
-use crate::hub::{ChanCtx, ChanProto, Hub, ModuleName};
+use crate::{hub::{ChanCtx, ChanProto, Hub, ModuleName}, error::Error};
 
 use super::DBPlugin;
 
@@ -9,12 +9,16 @@ pub struct Builder {
     name: ModuleName,
     rx: Option<mpsc::Receiver<ChanCtx>>,
     brkr: Option<Hub>,
+    database: mongodb::Database,
 }
 
-impl PluginBuilder<ModuleName, ChanProto, Hub> for Builder {
-    fn build(self: Box<Self>) -> Box<dyn Plugin<ModuleName, ChanProto>> {
+impl ComponentBuilder<ModuleName, ChanProto, Hub> for Builder {
+    type BrkrError = Error;
+    fn build(self: Box<Self>) -> Box<dyn Component<ModuleName, ChanProto, BrkrError = Self::BrkrError>> {
         Box::new(DBPlugin {
             broker: self.brkr.unwrap(),
+            database: self.database,
+            rx: self.rx.unwrap()
         })
     }
 
@@ -32,9 +36,10 @@ impl PluginBuilder<ModuleName, ChanProto, Hub> for Builder {
 }
 
 impl Builder {
-    pub fn new() -> Self {
+    pub fn new(database: mongodb::Database) -> Self {
         Self {
             name: ModuleName::DB,
+            database,
             rx: None,
             brkr: None,
         }

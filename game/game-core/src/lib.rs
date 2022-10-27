@@ -1,3 +1,3 @@
 pub mod broker;
-pub mod plugin;
+pub mod component;
 pub mod server;

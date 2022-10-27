@@ -1,5 +1,5 @@
 use crate::{hub::{ChanProto, Hub, ModuleName, ChanCtx}, error::Error};
-use game_core::{plugin::PluginBuilder};
+use game_core::{component::ComponentBuilder};
 use tokio::sync::mpsc;
 
 pub struct Builder {
@@ -16,10 +16,10 @@ impl Builder {
     }
 }
 
-impl PluginBuilder<ModuleName, ChanProto, Hub> for Builder {
+impl ComponentBuilder<ModuleName, ChanProto, Hub> for Builder {
 
     type BrkrError = Error;
-    fn build(self: Box<Self>) -> Box<dyn game_core::plugin::Plugin<ModuleName, ChanProto, BrkrError = Self::BrkrError>> {
+    fn build(self: Box<Self>) -> Box<dyn game_core::component::Component<ModuleName, ChanProto, BrkrError = Self::BrkrError>> {
         Box::new(super::NatsPlugin {
             nats: self.nats.unwrap(),
             hub: self.brkr.unwrap(),
