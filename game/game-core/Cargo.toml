@@ -14,3 +14,4 @@ hashbrown = {workspace = true}
 futures = {workspace = true}
 slice-deque = {workspace = true}
 pin-project = {workspace = true}
+strum = {workspace = true }

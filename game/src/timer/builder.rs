@@ -1,6 +1,6 @@
 use game_core::component::{Component, ComponentBuilder};
 use parking_lot::RwLock;
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::mpsc;
 
 use crate::{
     error::Error,
@@ -11,7 +11,6 @@ use super::TimerComponent;
 
 pub struct Builder {
     rx: Option<mpsc::Receiver<ChanCtx>>,
-    ctrl_rx: Option<oneshot::Receiver<()>>,
     brkr: Option<Hub>,
 }
 
@@ -40,9 +39,6 @@ impl ComponentBuilder<ModuleName, ChanProto, Hub> for Builder {
     fn set_rx(&mut self, rx: mpsc::Receiver<ChanCtx>) {
         self.rx = Some(rx);
     }
-    fn set_ctrl(&mut self, rx: oneshot::Receiver<()>) {
-        self.ctrl_rx = Some(rx)
-    }
     fn set_broker(&mut self, broker: Hub) {
         self.brkr = Some(broker);
     }
@@ -53,7 +49,6 @@ impl Builder {
         Self {
             rx: None,
             brkr: None,
-            ctrl_rx: None,
         }
     }
 }

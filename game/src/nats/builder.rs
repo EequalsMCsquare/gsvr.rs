@@ -3,14 +3,13 @@ use crate::{
     hub::{ChanCtx, ChanProto, Hub, ModuleName},
 };
 use game_core::component::ComponentBuilder;
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::mpsc;
 
 pub struct Builder {
     name: ModuleName,
     rx: Option<mpsc::Receiver<ChanCtx>>,
     nats: Option<async_nats::Client>,
     brkr: Option<Hub>,
-    ctrl_rx: Option<oneshot::Receiver<()>>,
 }
 
 impl Builder {
@@ -38,9 +37,6 @@ impl ComponentBuilder<ModuleName, ChanProto, Hub> for Builder {
     fn set_rx(&mut self, rx: tokio::sync::mpsc::Receiver<ChanCtx>) {
         self.rx = Some(rx);
     }
-    fn set_ctrl(&mut self, rx: tokio::sync::oneshot::Receiver<()>) {
-        self.ctrl_rx = Some(rx)
-    }
     fn set_broker(&mut self, broker: Hub) {
         self.brkr = Some(broker);
     }
@@ -53,7 +49,6 @@ impl Builder {
             rx: None,
             nats: None,
             brkr: None,
-            ctrl_rx: None,
         }
     }
 }

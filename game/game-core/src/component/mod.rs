@@ -12,10 +12,8 @@ where
     type BrkrError: Send;
 
     fn name(&self) -> NameEnum;
-    // fn channel(&self) -> mpsc::Sender<broker::ChanCtx<P, NameEnum, Self::BrkrError>>;
     async fn init(&mut self) -> Result<(), Box<dyn StdError + Send>> {
         Ok(())
     }
     async fn run(self: Box<Self>) -> anyhow::Result<()>;
-    // fn run(self: Box<Self>) -> ComponentJoinHandle<anyhow::Error>;
 }

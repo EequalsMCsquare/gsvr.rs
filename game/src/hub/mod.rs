@@ -17,7 +17,7 @@ pub struct Hub {
     timer: mpsc::Sender<ChanCtx>,
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, strum::EnumIter)]
 pub enum ModuleName {
     Play,
     Nats,

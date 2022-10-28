@@ -1,3 +1,4 @@
+use super::Server;
 use crate::{
     broker::{self, Broker, ChanCtx, Proto},
     component,
@@ -7,10 +8,8 @@ use anyhow::anyhow;
 use component::ComponentBuilder;
 use hashbrown::{HashMap, HashSet};
 use slice_deque::SliceDeque;
-use std::{cell::Cell, fmt::Debug, hash::Hash};
-use tokio::sync::{mpsc, oneshot};
-
-use super::Server;
+use std::{fmt::Debug, hash::Hash};
+use tokio::sync::mpsc;
 
 pub struct ServerBuilder<NameEnum, P, Brkr>
 where
@@ -70,35 +69,47 @@ where
             .iter()
             .map(|(k, (tx, _))| (k.clone(), tx.clone()))
             .collect();
+
+        // get all tx
+        let tx_map2 = tx_map.clone();
+        let ctrl_c_future = tokio::spawn(async move {
+            // wait for user to press ctrl_c
+            if let Err(err) = tokio::signal::ctrl_c().await {
+                tracing::error!("ctrl_c error: {}", err);
+            }
+            tracing::info!("ctrl+c receive, begin to clean up");
+            // send proto_shutdown to all components
+            for (k, tx) in tx_map2 {
+                tracing::debug!("sending shutdown to {:?}", k);
+                let k = k.clone();
+                if let Err(err) = tx.send(ChanCtx::new_cast(Proto::proto_shutdown(), k)).await {
+                    tracing::error!("fail to send shutdown to {:?}: {}", k, err);
+                }
+            }
+        });
+
         // set up components
         let components: Vec<_> = self
             .component_builders
             .into_iter()
             .map(|mut builder| {
-                let (tx, rx) = oneshot::channel();
                 builder.set_broker(Brkr::new(builder.name(), &tx_map));
                 builder.set_rx(broker_map.remove(&builder.name()).unwrap().1);
-                builder.set_ctrl(rx);
                 tracing::debug!("ComponentBuilder {:?} setup complete", builder.name());
                 let ret = builder.build();
                 tracing::debug!("component {:?} setup complete", ret.name());
-                (ret, tx)
+                ret
             })
             .collect();
         component_futures = components
             .into_iter()
             .map(|mut component| {
-                let name = component.0.name();
+                let name = component.name();
                 ComponentHandle {
                     join: tokio::spawn(async move {
-                        component
-                            .0
-                            .init()
-                            .await
-                            .map_err(|err| anyhow!("{:?}", err))?;
-                        component.0.run().await
+                        component.init().await.map_err(|err| anyhow!("{:?}", err))?;
+                        component.run().await
                     }),
-                    ctrl: Cell::new(Some(component.1)),
                     name: name,
                 }
             })
@@ -113,6 +124,7 @@ where
             component_handles: SliceDeque::from_iter(component_futures.into_iter()),
             poll_cursor: -1,
             poll_component: None,
+            ctrl_c_future,
         })
     }
 }

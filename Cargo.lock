@@ -1237,6 +1237,7 @@ dependencies = [
  "prost",
  "serde",
  "slice-deque",
+ "strum 0.24.1",
  "thiserror",
  "time 0.3.16",
  "tokio",
@@ -1255,6 +1256,7 @@ dependencies = [
  "hashbrown",
  "pin-project",
  "slice-deque",
+ "strum 0.24.1",
  "tokio",
  "tracing",
 ]

@@ -2,7 +2,7 @@ use super::Component;
 use crate::{
     broker::{self, Broker, Proto},
 };
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::mpsc;
 
 pub trait ComponentBuilder<NameEnum, P, Brkr>
 where
@@ -16,5 +16,4 @@ where
     fn name(&self) -> NameEnum;
     fn set_rx(&mut self, rx: mpsc::Receiver<broker::ChanCtx<P, NameEnum, Self::BrkrError>>);
     fn set_broker(&mut self, broker: Brkr);
-    fn set_ctrl(&mut self, rx: oneshot::Receiver<()>);
 }

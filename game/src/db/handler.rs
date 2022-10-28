@@ -1,8 +1,6 @@
 use super::DBComponent;
 use crate::error::{Error, Result};
-use mongodb::{
-    bson::{Binary, Document},
-};
+use mongodb::bson::{Binary, Document};
 use std::result::Result as StdResult;
 
 impl DBComponent {
@@ -24,7 +22,7 @@ impl DBComponent {
     }
 
     pub(super) async fn on_DBBulkUpsertReq(
-        db: mongodb::Database,
+        db: &mongodb::Database,
         coll: &str,
         data: Vec<Binary>,
     ) -> Result<()> {

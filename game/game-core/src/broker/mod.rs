@@ -1,9 +1,11 @@
 mod ctx;
 use async_trait::async_trait;
-use hashbrown::HashMap;
-use tokio::sync::{mpsc, oneshot};
 pub use ctx::ChanCtx;
 pub use ctx::Proto;
+use futures::StreamExt;
+use hashbrown::HashMap;
+use strum::IntoEnumIterator;
+use tokio::sync::{mpsc, oneshot};
 
 pub struct CastTx<P: Proto, NameEnum: Send, Error: Send> {
     tx: mpsc::Sender<ChanCtx<P, NameEnum, Error>>,
@@ -95,5 +97,44 @@ where
             return Err(Self::Error::from(err));
         }
         rx.blocking_recv()?
+    }
+}
+
+#[async_trait]
+pub trait BroadcastBroker<P, NameEnum>: Broker<P, NameEnum>
+where
+    P: Proto + Clone + Sync,
+    NameEnum: Send + strum::IntoEnumIterator,
+{
+    async fn broadcast(&self, msg: P)
+    where
+        <NameEnum as IntoEnumIterator>::Iterator: std::marker::Send,
+        P: 'async_trait;
+
+    fn blocking_broadcast(&self, msg: P);
+}
+
+#[async_trait]
+impl<T, P, NameEnum> BroadcastBroker<P, NameEnum> for T
+where
+    NameEnum: Send + strum::IntoEnumIterator,
+    P: Proto + Clone + Sync,
+    T: Broker<P, NameEnum> + Sync,
+{
+    async fn broadcast(&self, msg: P)
+    where
+        <NameEnum as IntoEnumIterator>::Iterator: std::marker::Send,
+        P: 'async_trait,
+    {
+        let mut stream = futures::stream::iter(NameEnum::iter());
+        while let Some(e) = stream.next().await {
+            self.cast(e, msg.clone()).await;
+        }
+    }
+
+    fn blocking_broadcast(&self, msg: P) {
+        for e in NameEnum::iter() {
+            self.blocking_cast(e, msg.clone())
+        }
     }
 }

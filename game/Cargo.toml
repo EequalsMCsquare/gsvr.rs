@@ -28,3 +28,4 @@ slice-deque = {workspace = true}
 parking_lot = {workspace = true}
 pin-project = {workspace = true}
 derivative = {workspace = true}
+strum = {workspace = true}
