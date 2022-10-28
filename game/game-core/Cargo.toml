@@ -12,3 +12,5 @@ tracing = { workspace = true}
 async-trait = { workspace = true }
 hashbrown = {workspace = true}
 futures = {workspace = true}
+slice-deque = {workspace = true}
+pin-project = {workspace = true}

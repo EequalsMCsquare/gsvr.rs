@@ -20,7 +20,11 @@ tracing = { workspace = true }
 futures = { workspace = true }
 tower = {workspace = true}
 config = {workspace = true}
-pin-project = { workpsace = true}
 hashbrown = {workspace = true}
 async-trait = {workspace = true}
 mongodb = {workspace = true}
+time = {workspace = true}
+slice-deque = {workspace = true}
+parking_lot = {workspace = true}
+pin-project = {workspace = true}
+derivative = {workspace = true}

@@ -1,7 +1,7 @@
-use super::{player, PlayPlugin};
+use super::{player, PlayComponent};
 use anyhow::anyhow;
 
-impl PlayPlugin {
+impl PlayComponent {
     pub fn handle_pmsg(&self, player_id: u64, msg: pb::CsMsg) {
         let mut players = self.players.borrow_mut();
         let player_ref;
@@ -17,14 +17,13 @@ impl PlayPlugin {
         }
         if let Err(err) = match msg {
             pb::CsMsg::CsEcho(msg) => self.on_CsEcho(player_ref, msg),
-
             _um => Err(anyhow!(
                 "[play] unhandled player message from player-{}. {:?}",
                 player_id,
                 _um
             )),
         } {
-            tracing::error!("handle message error happend. {}", err);
+            tracing::error!("error occur while handle player message: {}", err)
         }
     }
 

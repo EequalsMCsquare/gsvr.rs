@@ -3,10 +3,10 @@ use game_core::broker::Broker;
 
 use crate::{hub::{ChanProto, ModuleName}, error::{Result, Error}};
 
-use super::NatsPlugin;
+use super::NatsComponent;
 
 #[allow(non_snake_case)]
-impl NatsPlugin {
+impl NatsComponent {
     pub(super) async fn on_Sub2HubReq(
         &self,
         from: ModuleName,

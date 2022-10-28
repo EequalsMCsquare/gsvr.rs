@@ -2,14 +2,16 @@ use std::path::Path;
 
 use anyhow::anyhow;
 use config::File;
-use gconf::{ConfigLog, ConfigMQ, Env};
+use gconf::{ConfigDB, ConfigLog, ConfigMQ, Env};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub log: ConfigLog,
     pub mq: ConfigMQ,
+    pub database: ConfigDB,
     pub env: Env,
+    pub sid: u16,
 }
 
 impl Config {
@@ -31,6 +33,16 @@ impl Config {
         } else {
             s.build()
         }?;
-        cfg.try_deserialize().map_err(Into::into)
+        let mut cfg: Config = cfg.try_deserialize().map_err(anyhow::Error::from)?;
+        cfg.database.db_name = if let Some(db_name) = cfg.database.db_name {
+            Some(
+                db_name
+                    .replace("${ENV}", &env)
+                    .replace("${SID}", &cfg.sid.to_string()),
+            )
+        } else {
+            Some(format!("GAME_{}_{}", env, cfg.sid))
+        };
+        Ok(cfg)
     }
 }

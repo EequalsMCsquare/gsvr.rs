@@ -1,27 +1,33 @@
+use std::fmt::Debug;
+
 use tokio::sync::oneshot;
 
-#[derive(Debug)]
-pub struct ChanCtx<Proto, NameEnum, Error>
-where
-    Proto: Send,
-    Error: Send,
-{
-    pub payload: Proto,
-    pub from: NameEnum,
-    reply_chan: Option<oneshot::Sender<Result<Proto, Error>>>,
+pub trait Proto: Send + Debug {
+    fn proto_shutdown() -> Self;
 }
 
-impl<Proto, NameEnum, Error> ChanCtx<Proto, NameEnum, Error>
+#[derive(Debug)]
+pub struct ChanCtx<P, NameEnum, Error>
 where
-    Proto: Send,
+    P: Proto,
+    Error: Send,
+{
+    pub payload: P,
+    pub from: NameEnum,
+    reply_chan: Option<oneshot::Sender<Result<P, Error>>>,
+}
+
+impl<P, NameEnum, Error> ChanCtx<P, NameEnum, Error>
+where
+    P: Proto,
     Error: Send,
 {
     pub fn new_call(
-        msg: Proto,
+        msg: P,
         from: NameEnum,
     ) -> (
-        ChanCtx<Proto, NameEnum, Error>,
-        oneshot::Receiver<Result<Proto, Error>>,
+        ChanCtx<P, NameEnum, Error>,
+        oneshot::Receiver<Result<P, Error>>,
     ) {
         let (tx, rx) = oneshot::channel();
         (
@@ -34,7 +40,7 @@ where
         )
     }
 
-    pub fn new_cast(msg: Proto, from: NameEnum) -> ChanCtx<Proto, NameEnum, Error> {
+    pub fn new_cast(msg: P, from: NameEnum) -> ChanCtx<P, NameEnum, Error> {
         Self {
             payload: msg,
             reply_chan: None,
@@ -42,7 +48,7 @@ where
         }
     }
 
-    pub fn ok(self, reply: Proto) {
+    pub fn ok(self, reply: P) {
         if let Some(reply_chan) = self.reply_chan {
             if let Err(_) = reply_chan.send(Ok(reply)) {
                 tracing::error!("ChanRpc fail to reply with Ok. receiver dropped");

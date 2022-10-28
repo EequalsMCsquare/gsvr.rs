@@ -1,4 +1,5 @@
 use game_core::component::{Component, ComponentBuilder};
+use parking_lot::RwLock;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::{
@@ -6,30 +7,36 @@ use crate::{
     hub::{ChanCtx, ChanProto, Hub, ModuleName},
 };
 
-use super::DBComponent;
+use super::TimerComponent;
 
 pub struct Builder {
-    name: ModuleName,
     rx: Option<mpsc::Receiver<ChanCtx>>,
     ctrl_rx: Option<oneshot::Receiver<()>>,
     brkr: Option<Hub>,
-    database: Option<mongodb::Database>,
 }
 
 impl ComponentBuilder<ModuleName, ChanProto, Hub> for Builder {
     type BrkrError = Error;
+
     fn build(
         self: Box<Self>,
     ) -> Box<dyn Component<ModuleName, ChanProto, BrkrError = Self::BrkrError>> {
-        Box::new(DBComponent {
-            broker: self.brkr.unwrap(),
-            database: self.database.unwrap(),
+        let (tx, rx) = mpsc::channel(4);
+        Box::new(TimerComponent {
+            hub: self.brkr.unwrap(),
             rx: self.rx.unwrap(),
+            timers: Default::default(),
+            curr: RwLock::new(None),
+            curr_handle: tokio::spawn(async {}),
+            timer_rx: rx,
+            timer_tx: tx,
         })
     }
+
     fn name(&self) -> ModuleName {
-        self.name
+        ModuleName::Timer
     }
+
     fn set_rx(&mut self, rx: mpsc::Receiver<ChanCtx>) {
         self.rx = Some(rx);
     }
@@ -44,16 +51,9 @@ impl ComponentBuilder<ModuleName, ChanProto, Hub> for Builder {
 impl Builder {
     pub fn new() -> Self {
         Self {
-            name: ModuleName::DB,
-            database: None,
             rx: None,
             brkr: None,
-            ctrl_rx:None
+            ctrl_rx: None,
         }
-    }
-
-    pub fn with_db(mut self, database: mongodb::Database) -> Self {
-        self.database = Some(database);
-        self
     }
 }

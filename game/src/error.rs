@@ -4,6 +4,7 @@ use crate::hub::ChanCtx;
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;
 
+#[allow(dead_code)]
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("bag is at max capacity: {0}")]
@@ -14,6 +15,8 @@ pub enum Error {
     ItemMax { cap_needed: u64, remain: u64 },
     #[error(transparent)]
     Database(#[from] mongodb::error::Error),
+    #[error("no such record found in database. collection: {coll}")]
+    NoDBRecord { coll: String },
     #[error(transparent)]
     ChanRecv(#[from] oneshot::error::RecvError),
     #[error("send error: {0}")]
@@ -21,7 +24,7 @@ pub enum Error {
     #[error("nats subscribe error: {0}")]
     NatsSub(Box<dyn std::error::Error + Send + Sync>),
     #[error("nats publish error: {0}")]
-    NatsPub(Box<dyn std::error::Error + Send + Sync>)
+    NatsPub(Box<dyn std::error::Error + Send + Sync>),
 }
 
 impl From<mpsc::error::SendError<ChanCtx>> for Error {

@@ -1,5 +1,4 @@
 pub mod codec;
-mod processor;
 mod r#enum {
     include!("./pb.r#enum.rs");
 }
@@ -12,7 +11,6 @@ mod registry {
 }
 
 pub use msg::*;
-pub use processor::{PbError, Processor};
 pub use prost::Message;
 pub use r#enum::{ErrCode, Gender};
 pub use registry::{cs_proto::Payload as CsMsg, sc_proto::Payload as ScMsg, CsProto, ScProto};

@@ -1,64 +1,78 @@
-use crate::error::Result;
+use derivative::Derivative;
+use game_core::broker::Proto;
 use mongodb::bson;
 use std::fmt::Debug;
 
+#[allow(dead_code)]
+#[derive(Derivative)]
+#[derivative(Debug)]
 pub enum ChanProto {
-    CsPMsg {
+    CsPMsgNtf {
         player_id: u64,
         message: pb::CsMsg,
     },
-    ScPMsg {
+    ScPMsgNtf {
         player_id: u64,
         message: pb::ScMsg,
     },
+
+    // subscribe nats topic and get a subscriber
     SubTopicReq {
         topic: String,
     },
     SubTopicAck {
+        #[derivative(Debug = "ignore")]
         subscriber: async_nats::Subscriber,
     },
+
+    // subscribe nats topic to rx
     Sub2HubReq {
         topic: String,
         decode_fn: fn(async_nats::Message) -> anyhow::Result<ChanProto>,
     },
+    Sub2HubAck,
+
+    // load data from mongodb
     DBLoadReq {
         coll: String,
         filter: Option<bson::Document>,
-        options: Option<mongodb::options::FindOneOptions>,
     },
-    DBLoadAck(Result<bson::Binary>),
-    Sub2HubAck,
+    DBLoadAck(bson::Binary),
+
+    // start a new timer
+    NewTimerReq {
+        typ: u16,
+        deadline: std::time::Instant,
+        args: TimerArgs,
+    },
+    NewTimerAck,
+
+    // start a new ticker
+    NewTickerReq {
+        typ: u16,
+        interval: std::time::Duration,
+        start_time: std::time::Instant,
+        args: TimerArgs,
+    },
+    NewTickerAck,
+
+    // notify timer/ticker trigger
+    TimerTriggerNtf {
+        typ: u16,
+        args: TimerArgs,
+    },
+
+    CtrlShutdown,
 }
 
-impl Debug for ChanProto {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::CsPMsg { player_id, message } => f
-                .debug_struct("CsPMsg")
-                .field("player_id", player_id)
-                .field("message", message)
-                .finish(),
-            Self::ScPMsg { player_id, message } => f
-                .debug_struct("ScPMsg")
-                .field("player_id", player_id)
-                .field("message", message)
-                .finish(),
-            Self::SubTopicReq { topic } => {
-                f.debug_struct("SubTopicReq").field("topic", topic).finish()
-            }
-            Self::SubTopicAck { subscriber: _ } => f.debug_struct("SubTopicAck").finish(),
-            ChanProto::Sub2HubReq { topic, decode_fn } => f
-                .debug_struct("Sub2HubReq")
-                .field("topic", topic)
-                // .field("decode_fn", decode_fn)
-                .finish(),
-            ChanProto::Sub2HubAck => write!(f, "Sub2HubAck"),
-            ChanProto::DBLoadReq {
-                coll,
-                filter,
-                options,
-            } => todo!(),
-            ChanProto::DBLoadAck(res) => todo!(),
-        }
+impl Proto for ChanProto {
+    fn proto_shutdown() -> Self {
+        Self::CtrlShutdown
     }
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+pub enum TimerArgs {
+    Empty,
 }

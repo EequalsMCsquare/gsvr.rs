@@ -1,24 +1,21 @@
-use crate::broker;
-use tokio::sync::mpsc;
+use crate::broker::Proto;
 mod builder;
 pub use builder::ComponentBuilder;
+use std::error::Error as StdError;
 
-pub enum ComponentJoinHandle<Error> {
-    TokioHandle(tokio::task::JoinHandle<Result<(), Error>>),
-    ThreadHandle(std::thread::JoinHandle<Result<(), Error>>),
-}
-
-pub trait Component<NameEnum, Proto>
+#[async_trait::async_trait]
+pub trait Component<NameEnum, P>: Send
 where
     NameEnum: Send,
-    Proto: Send,
+    P: Proto,
 {
     type BrkrError: Send;
 
     fn name(&self) -> NameEnum;
-    fn channel(&self) -> mpsc::Sender<broker::ChanCtx<Proto, NameEnum, Self::BrkrError>>;
-    fn init(&mut self) -> anyhow::Result<()> {
+    // fn channel(&self) -> mpsc::Sender<broker::ChanCtx<P, NameEnum, Self::BrkrError>>;
+    async fn init(&mut self) -> Result<(), Box<dyn StdError + Send>> {
         Ok(())
     }
-    fn run(self: Box<Self>) -> ComponentJoinHandle<anyhow::Error>;
+    async fn run(self: Box<Self>) -> anyhow::Result<()>;
+    // fn run(self: Box<Self>) -> ComponentJoinHandle<anyhow::Error>;
 }

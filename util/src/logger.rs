@@ -1,8 +1,5 @@
 use std::{io, path::Path};
-
-pub use tracing::Level;
 use tracing_subscriber::EnvFilter;
-
 use gconf::ConfigLog;
 
 /// initialize logger for an app

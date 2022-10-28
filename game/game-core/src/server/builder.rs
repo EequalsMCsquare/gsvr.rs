@@ -1,98 +1,118 @@
-use std::{fmt::Debug, hash::Hash};
-
-use hashbrown::{HashMap, HashSet};
-use component::ComponentBuilder;
-use tokio::sync::mpsc;
-
 use crate::{
-    broker::{self, Broker, ChanCtx},
-    component::{self, ComponentJoinHandle},
+    broker::{self, Broker, ChanCtx, Proto},
+    component,
+    server::ComponentHandle,
 };
+use anyhow::anyhow;
+use component::ComponentBuilder;
+use hashbrown::{HashMap, HashSet};
+use slice_deque::SliceDeque;
+use std::{cell::Cell, fmt::Debug, hash::Hash};
+use tokio::sync::{mpsc, oneshot};
 
 use super::Server;
 
-pub struct ServerBuilder<NameEnum, Proto, Brkr>
+pub struct ServerBuilder<NameEnum, P, Brkr>
 where
     NameEnum: Hash + Eq + Send + Debug,
-    Proto: Send,
-    Brkr: Broker<Proto, NameEnum>,
+    P: Proto,
+    Brkr: Broker<P, NameEnum>,
 {
-    plugin_set: HashSet<NameEnum>,
-    plugin_builders: Vec<Box<dyn ComponentBuilder<NameEnum, Proto, Brkr, BrkrError = Brkr::Error>>>,
+    component_set: HashSet<NameEnum>,
+    component_builders: Vec<Box<dyn ComponentBuilder<NameEnum, P, Brkr, BrkrError = Brkr::Error>>>,
 }
 
-impl<NameEnum, Proto, Brkr> ServerBuilder<NameEnum, Proto, Brkr>
+impl<NameEnum, P, Brkr> ServerBuilder<NameEnum, P, Brkr>
 where
-    NameEnum: Hash + Eq + Send + Debug + Copy,
-    Proto: Send,
-    Brkr: broker::Broker<Proto, NameEnum>,
+    NameEnum: Hash + Eq + Send + Debug + Copy + 'static,
+    P: Proto + 'static,
+    Brkr: broker::Broker<P, NameEnum> + 'static,
 {
     pub fn new() -> Self {
         Self {
-            plugin_set: Default::default(),
-            plugin_builders: Default::default(),
+            component_set: Default::default(),
+            component_builders: Default::default(),
         }
     }
 
-    pub fn component<PB>(mut self, plugin_builder: PB) -> Self
+    pub fn component<PB>(mut self, component_builder: PB) -> Self
     where
-        PB: ComponentBuilder<NameEnum, Proto, Brkr, BrkrError = Brkr::Error> + 'static,
+        PB: ComponentBuilder<NameEnum, P, Brkr, BrkrError = Brkr::Error> + 'static,
     {
-        if let Some(_) = self.plugin_set.get(&plugin_builder.name()) {
-            panic!("plugin[{:?}] already registered", plugin_builder.name());
+        if let Some(_) = self.component_set.get(&component_builder.name()) {
+            panic!(
+                "component[{:?}] already registered",
+                component_builder.name()
+            );
         }
-        self.plugin_set.insert(plugin_builder.name());
-        self.plugin_builders.push(Box::new(plugin_builder));
+        self.component_set.insert(component_builder.name());
+        self.component_builders.push(Box::new(component_builder));
         self
     }
 
-    pub fn serve<Error>(self) -> Server<NameEnum, Error>
-    where
-        Vec<ComponentJoinHandle<Error>>: FromIterator<ComponentJoinHandle<anyhow::Error>>,
-    {
-        let join_handles: Vec<ComponentJoinHandle<Error>>;
+    pub fn serve(self) -> anyhow::Result<Server<NameEnum, anyhow::Error>> {
+        if self.component_builders.len() == 0 {
+            return Err(anyhow!("no components"));
+        }
+        let component_futures: Vec<_>;
         let mut broker_map: HashMap<
             NameEnum,
             (
-                mpsc::Sender<ChanCtx<Proto, NameEnum, Brkr::Error>>,
-                mpsc::Receiver<ChanCtx<Proto, NameEnum, Brkr::Error>>,
+                mpsc::Sender<ChanCtx<P, NameEnum, Brkr::Error>>,
+                mpsc::Receiver<ChanCtx<P, NameEnum, Brkr::Error>>,
             ),
         > = self
-            .plugin_builders
+            .component_builders
             .iter()
             .map(|builder| (builder.name(), mpsc::channel(1024)))
             .collect();
-        tracing::debug!("broker map: {:?}", broker_map);
-        // set up plugins
-        let tx_map: HashMap<NameEnum, mpsc::Sender<ChanCtx<Proto, NameEnum, Brkr::Error>>> = broker_map
+        let tx_map: HashMap<NameEnum, mpsc::Sender<ChanCtx<P, NameEnum, Brkr::Error>>> = broker_map
             .iter()
             .map(|(k, (tx, _))| (k.clone(), tx.clone()))
             .collect();
-        tracing::debug!("tx map: {:?}", tx_map);
-        join_handles = self
-            .plugin_builders
+        // set up components
+        let components: Vec<_> = self
+            .component_builders
             .into_iter()
             .map(|mut builder| {
+                let (tx, rx) = oneshot::channel();
                 builder.set_broker(Brkr::new(builder.name(), &tx_map));
                 builder.set_rx(broker_map.remove(&builder.name()).unwrap().1);
-                tracing::debug!("PluginBuilder {:?} setup complete", builder.name());
-                let mut plugin = builder.build();
-                tracing::debug!("plugin {:?} build success", plugin.name());
-                if let Err(err) = plugin.init() {
-                    panic!("plugin {:?} init error. {}", plugin.name(), err);
-                }
-                tracing::debug!("plugin {:?} init success, begin to run", plugin.name());
-                plugin.run()
+                builder.set_ctrl(rx);
+                tracing::debug!("ComponentBuilder {:?} setup complete", builder.name());
+                let ret = builder.build();
+                tracing::debug!("component {:?} setup complete", ret.name());
+                (ret, tx)
             })
             .collect();
-        tracing::info!(
-            "all plugins launch complete, running: {:?}",
-            self.plugin_set
-        );
+        component_futures = components
+            .into_iter()
+            .map(|mut component| {
+                let name = component.0.name();
+                ComponentHandle {
+                    join: tokio::spawn(async move {
+                        component
+                            .0
+                            .init()
+                            .await
+                            .map_err(|err| anyhow!("{:?}", err))?;
+                        component.0.run().await
+                    }),
+                    ctrl: Cell::new(Some(component.1)),
+                    name: name,
+                }
+            })
+            .collect();
 
-        Server {
-            registered_plugins: self.plugin_set,
-            plugin_join_handles: join_handles,
-        }
+        tracing::info!(
+            "all componentss launch complete, running: {:?}",
+            self.component_set
+        );
+        tracing::info!("press ctrl+c to terminate the app");
+        Ok(Server {
+            component_handles: SliceDeque::from_iter(component_futures.into_iter()),
+            poll_cursor: -1,
+            poll_component: None,
+        })
     }
 }

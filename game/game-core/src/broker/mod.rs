@@ -1,35 +1,63 @@
+mod ctx;
 use async_trait::async_trait;
 use hashbrown::HashMap;
 use tokio::sync::{mpsc, oneshot};
-mod ctx;
-
 pub use ctx::ChanCtx;
+pub use ctx::Proto;
+
+pub struct CastTx<P: Proto, NameEnum: Send, Error: Send> {
+    tx: mpsc::Sender<ChanCtx<P, NameEnum, Error>>,
+    from: NameEnum,
+}
+
+impl<P, NameEnum, Error> CastTx<P, NameEnum, Error>
+where
+    P: Proto,
+    NameEnum: Send + Copy + Clone,
+    Error: Send,
+{
+    pub async fn cast(&self, msg: P) {
+        if let Err(err) = self.tx.send(ChanCtx::new_cast(msg, self.from)).await {
+            tracing::error!("fail to cast. {}", err)
+        }
+    }
+
+    pub fn blocking_cast(&self, msg: P) {
+        if let Err(err) = self.tx.blocking_send(ChanCtx::new_cast(msg, self.from)) {
+            tracing::error!("fail to cast. {}", err)
+        }
+    }
+}
 
 #[async_trait]
-pub trait Broker<Proto, NameEnum>
+pub trait Broker<P, NameEnum>
 where
     NameEnum: Send,
-    Proto: Send,
+    P: Proto,
 {
     type Error: Send
         + From<oneshot::error::RecvError>
-        + From<mpsc::error::SendError<ChanCtx<Proto, NameEnum, Self::Error>>>;
+        + From<mpsc::error::SendError<ChanCtx<P, NameEnum, Self::Error>>>;
 
     fn new(
         name: NameEnum,
-        tx_map: &HashMap<NameEnum, mpsc::Sender<ChanCtx<Proto, NameEnum, Self::Error>>>,
+        tx_map: &HashMap<NameEnum, mpsc::Sender<ChanCtx<P, NameEnum, Self::Error>>>,
     ) -> Self;
 
     fn name(&self) -> NameEnum;
 
-    fn get_tx<'a>(
-        &'a self,
-        name: NameEnum,
-    ) -> &'a mpsc::Sender<ChanCtx<Proto, NameEnum, Self::Error>>;
+    fn get_tx<'a>(&'a self, name: NameEnum) -> &'a mpsc::Sender<ChanCtx<P, NameEnum, Self::Error>>;
 
-    async fn cast<'a>(&'a self, to: NameEnum, msg: Proto)
+    fn cast_tx(&self, name: NameEnum) -> CastTx<P, NameEnum, Self::Error> {
+        CastTx {
+            from: self.name(),
+            tx: self.get_tx(name).clone(),
+        }
+    }
+
+    async fn cast<'a>(&'a self, to: NameEnum, msg: P)
     where
-        Proto: 'a,
+        P: 'a,
         NameEnum: 'a,
     {
         let chan = self.get_tx(to);
@@ -38,16 +66,16 @@ where
         }
     }
 
-    fn blocking_cast(&self, to: NameEnum, msg: Proto) {
+    fn blocking_cast(&self, to: NameEnum, msg: P) {
         let chan = self.get_tx(to);
         if let Err(err) = chan.blocking_send(ChanCtx::new_cast(msg, self.name())) {
             tracing::error!("fail to cast. {}", err)
         }
     }
 
-    async fn call<'a>(&'a self, to: NameEnum, msg: Proto) -> Result<Proto, Self::Error>
+    async fn call<'a>(&'a self, to: NameEnum, msg: P) -> Result<P, Self::Error>
     where
-        Proto: 'a,
+        P: 'a,
         NameEnum: 'a,
     {
         let (ctx, rx) = ChanCtx::new_call(msg, self.name());
@@ -59,7 +87,7 @@ where
         rx.await.map_err(|err| Self::Error::from(err))?
     }
 
-    fn blocking_call(&self, to: NameEnum, msg: Proto) -> Result<Proto, Self::Error> {
+    fn blocking_call(&self, to: NameEnum, msg: P) -> Result<P, Self::Error> {
         let (ctx, rx) = ChanCtx::new_call(msg, self.name());
         let chan = self.get_tx(to);
         if let Err(err) = chan.blocking_send(ctx) {

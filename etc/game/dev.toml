@@ -1,0 +1,2 @@
+[database]
+db_name = "GAME_${ENV}_${SID}"

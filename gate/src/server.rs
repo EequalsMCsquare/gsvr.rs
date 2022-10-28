@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use tokio::net::{TcpListener, TcpStream};
+use tokio::net::TcpListener;
 use tracing::debug;
 
 use crate::agent::Agent;

@@ -1,20 +1,11 @@
-use anyhow::anyhow;
-use anyhow::bail;
+use anyhow::{anyhow, bail};
 use bytes::Bytes;
-use futures::ready;
-use futures::Future;
-use futures::SinkExt;
-use futures::StreamExt;
+use futures::{ready, Future, SinkExt, StreamExt};
 use pb::Message;
 use pin_project::pin_project;
 use std::task::Poll;
-use tokio::io::ReadHalf;
-use tokio::io::WriteHalf;
-use tokio::net::TcpStream;
-use tokio_util::codec::Decoder;
-use tokio_util::codec::Encoder;
-use tokio_util::codec::FramedRead;
-use tokio_util::codec::FramedWrite;
+use tokio::{io::{ReadHalf, WriteHalf}, net::TcpStream};
+use tokio_util::codec::{Decoder, Encoder, FramedRead, FramedWrite};
 use tracing::debug;
 
 #[pin_project(project=AgentProject)]
