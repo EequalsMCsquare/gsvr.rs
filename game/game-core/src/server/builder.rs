@@ -110,7 +110,7 @@ where
                         component.init().await.map_err(|err| anyhow!("{:?}", err))?;
                         component.run().await
                     }),
-                    name: name,
+                    name,
                 }
             })
             .collect();

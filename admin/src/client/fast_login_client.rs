@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use crate::proto::*;
 use anyhow::{anyhow, bail};
@@ -9,7 +9,7 @@ use tokio::{
 };
 use tokio_util::codec::{FramedRead, FramedWrite};
 
-use super::histroy::Histroy;
+use super::histroy::History;
 
 pub struct FastLoginClient {
     pub id: u64,
@@ -18,7 +18,7 @@ pub struct FastLoginClient {
     reqchan: tokio::sync::broadcast::Receiver<TagCsMsg<u64>>,
     ackchan: tokio::sync::mpsc::Sender<TagScMsg<u64>>,
     closechan: tokio::sync::oneshot::Receiver<()>,
-    history: Arc<Histroy>,
+    history: Arc<History>,
 }
 
 impl FastLoginClient {
@@ -31,7 +31,7 @@ impl FastLoginClient {
         let stream = TcpStream::from_std(std::net::TcpStream::connect("127.0.0.1:8001")?)?;
         let (r, w) = tokio::io::split(stream);
         Ok(Self {
-            history: Arc::new(Histroy::new()),
+            history: Arc::new(History::new()),
             id,
             ackchan,
             reqchan,
@@ -43,7 +43,7 @@ impl FastLoginClient {
 
     async fn verify_auth(&mut self) -> anyhow::Result<()> {
         let cslogin = pb::CsMsg::CsFastLogin(pb::CsFastLogin { player_id: self.id });
-        match self.framed_writer.send(cslogin).await {
+        match self.framed_writer.send(cslogin.clone()).await {
             Ok(_) => {
                 // wait for auth result
                 match self.framed_reader.next().await {
@@ -73,7 +73,7 @@ impl FastLoginClient {
             tokio::select! {
                 frame_ret = self.framed_reader.next() => match frame_ret {
                     Some(Ok(frame)) => {
-                        &self.history.sc.push(frame.clone());
+                        &self.history.sc.write().push_back(frame.clone());
                         self.ackchan.send(TagScMsg {
                             msg: frame,
                             from: self.id
@@ -98,7 +98,7 @@ impl FastLoginClient {
                             continue;
 
                         }
-                        &self.history.cs.push(req.msg);
+                        &self.history.cs.write().push_back(req.msg);
                     }
                     Err(err) => return Err(err.into()),
                 },
@@ -109,7 +109,7 @@ impl FastLoginClient {
         }
     }
 
-    pub fn history(&self) -> Arc<Histroy> {
+    pub fn history(&self) -> Arc<History> {
         self.history.clone()
     }
 }

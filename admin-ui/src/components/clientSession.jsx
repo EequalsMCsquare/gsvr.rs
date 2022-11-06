@@ -1,106 +1,15 @@
 import { Autocomplete, Avatar, Button, Grid, IconButton, ListItem, ListItemAvatar, ListItemText, Paper, Stack, TextField, Typography } from "@mui/material";
 import React, { useCallback, useState } from "react";
 import { useEffect } from "react";
-import hintService from "../service/hint";
 import { ContentCopy as ContentCopyIcon } from "@mui/icons-material";
-import { invoke } from "@tauri-apps/api/tauri";
-import clientMgrApi from "tauri-plugin-clientmgr-api"
+import clientMgrApi from "tauri-plugin-clientmgr-api";
+import pbhintApi from "tauri-plugin-pbhint-api";
 
 const csMock = [
-    {
-        name: "CsEcho",
-        payload: 
-`{
-    "CsEcho": {
-        "content": "hello world"
-    }
-}`
-    },
-    {
-        name: "CsEcho",
-        payload: 
-`{
-    "CsEcho": {
-        "content": "hello world"
-    }
-}`
-    },
-    {
-        name: "CsEcho",
-        payload: 
-`{
-    "CsEcho": {
-        "content": "hello world"
-    }
-}`
-    },
-    {
-        name: "CsEcho",
-        payload: 
-`{
-    "CsEcho": {
-        "content": "hello world"
-    }
-}`
-    },
-    {
-        name: "CsEcho",
-        payload: 
-`{
-    "CsEcho": {
-        "content": "hello world"
-    }
-}`
-    },
+]
+const scMock = [
 ]
 
-const scMock = [
-    {
-        name: "ScEcho",
-        payload:
-`{
-    "ScEcho": {
-        "content": "you said: hello world"
-    }
-}`
-    },
-    {
-        name: "ScEcho",
-        payload:
-`{
-    "ScEcho": {
-        "content": "you said: hello world"
-    }
-}`
-    },
-    {
-        name: "ScEcho",
-        payload:
-`{
-    "ScEcho": {
-        "content": "you said: hello world"
-    }
-}`
-    },
-    {
-        name: "ScEcho",
-        payload:
-`{
-    "ScEcho": {
-        "content": "you said: hello world"
-    }
-}`
-    },
-    {
-        name: "ScEcho",
-        payload:
-`{
-    "ScEcho": {
-        "content": "you said: hello world"
-    }
-}`
-    },
-]
 function Message(props) {
     const type = props.type; // cs or sc
     const idx = props.idx;
@@ -116,7 +25,7 @@ function Message(props) {
                 }
             >
                 <ListItemAvatar>
-                    <Avatar>{idx+1}</Avatar>
+                    <Avatar>{idx + 1}</Avatar>
                 </ListItemAvatar>
                 <ListItemText
                     primary={pb.name}
@@ -142,7 +51,7 @@ function AckHistory(props) {
 
     return (
         <Stack paddingBottom={2} paddingTop={2} overflow={"scroll"} spacing={1} {...props}>
-            {scMsg.map((e, i)=><Message key={i} idx={i} pb={e}/>)}
+            {scMsg.map((e, i) => <Message key={i} idx={i} pb={e} />)}
         </Stack>
     )
 }
@@ -151,7 +60,7 @@ function ReqHistory(props) {
     const csMsg = props.csmsg;
     return (
         <Stack paddingBottom={2} paddingTop={2} overflow={"scroll"} spacing={1} {...props}>
-            {csMsg.map((e, i)=><Message key={i} idx={i} pb={e}/>)}
+            {csMsg.map((e, i) => <Message key={i} idx={i} pb={e} />)}
         </Stack>
     )
 }
@@ -163,7 +72,7 @@ function MessageInput(props) {
     const [hintOn, setHintOn] = useState(true);
     function handleValueChange(_, newVal) {
         if (hintOn) {
-            hintService.tryHint({ key: newVal }).then(res => {
+            pbhintApi.hint(newVal).then(res => {
                 setValue(res);
                 setInputValue(res);
                 setHintOn(false);
@@ -203,9 +112,9 @@ function MessageInput(props) {
             />
             <Button
                 size="large"
-                variant="contained" 
-                color="success" 
-                type="submit" 
+                variant="contained"
+                color="success"
+                type="submit"
                 onClick={handleSendRequest.bind(null, value)}
             >Send</Button>
         </>
@@ -219,7 +128,10 @@ function ClientSession(props) {
         width: document.documentElement.clientWidth,
         height: document.documentElement.clientHeight,
     });
+    const [csMsg, setCsMsg] = useState([]);
+    const [scMsg, setScMsg] = useState([]);
     const [hintKeys, setHintKeys] = useState([]);
+    const [unlisten, setUnlisten] = useState(() => { });
     const onResize = useCallback(() => {
         setWindowSize({
             width: document.documentElement.clientWidth,
@@ -235,17 +147,43 @@ function ClientSession(props) {
     }, [onResize]);
     // init hint keys
     useEffect(() => {
-        hintService.getOptions().then(res => {
+        pbhintApi.options().then(res => {
             console.log(`hint keys: ${res}`);
             setHintKeys(res);
         }).catch(err => {
             console.error(err);
         });
-    }, [hintService.getHintKeys]);
+    }, []);
+    // init fclient history
+    useEffect(() => {
+        clientMgrApi.fclient_history(Number(client.id)).then(res => {
+            let obj = JSON.parse(res);
+            setCsMsg(obj.cs);
+            setScMsg(obj.sc);
+        }).catch(err => {
+            console.error(err)
+        });
+    }, [client]);
+
+    useEffect(() => {
+        clientMgrApi.fclient_listen_reply(client.id, tagmsg => {
+            console.log(tagmsg);
+            scMsg.push(tagmsg.payload);
+            setScMsg(scMsg);
+            console.log(scMsg);
+        }).then(res => {
+            setUnlisten(() => {
+                console.log('unlisten recv_fscmsg');
+                res();
+            });
+        }).catch(err => {
+            console.error(err);
+        });
+        return unlisten;
+    }, [client]);
 
     function handleSendRequest(content) {
         clientMgrApi.fclient_request(Number(client.id), content).then(res => {
-            console.log(res);
         }).catch(err => {
             console.error(err);
         });
@@ -275,10 +213,10 @@ function ClientSession(props) {
                         mb={1}
                         csmsg={csMock}
                     />
-                    <MessageInput 
-                        hintKeys={hintKeys} 
+                    <MessageInput
+                        hintKeys={hintKeys}
                         handleSendRequest={handleSendRequest}
-                        />
+                    />
                 </Stack>
             </Grid>
         </Grid>

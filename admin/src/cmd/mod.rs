@@ -17,33 +17,3 @@ pub enum RootCmd {
         count: u64,
     },
 }
-
-mod test {
-    use super::{RootCmd};
-    use clap::Parser;
-    #[test]
-    fn test_parse_long() {
-        let input = "- login --username eequalsmc2 --password 123aaa";
-        let ret = RootCmd::parse_from(input.split_whitespace());
-        debug_assert_eq!(
-            ret,
-            RootCmd::Login {
-                username: "eequalsmc2".to_string(),
-                password: "123aaa".to_string()
-            }
-        );
-    }
-
-    #[test]
-    fn test_parse_short() {
-        let input = "- login -u eequalsmc2 -p 123aaa";
-        let ret = RootCmd::parse_from(input.split_whitespace());
-        debug_assert_eq!(
-            ret,
-            RootCmd::Login {
-                username: "eequalsmc2".to_string(),
-                password: "123aaa".to_string()
-            }
-        );
-    }
-}

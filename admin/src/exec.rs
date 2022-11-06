@@ -3,7 +3,7 @@ use clap::Parser;
 use dialoguer::Input;
 use tokio::sync::{broadcast, mpsc};
 
-use crate::cmd::{self, AgentCmd};
+use crate::cmd::AgentCmd;
 
 pub struct Executor {
     recvchan: mpsc::Receiver<pb::ScMsg>,
@@ -48,6 +48,6 @@ impl Executor {
                 }
             }
         }
-        Ok(())
+        // Ok(())
     }
 }

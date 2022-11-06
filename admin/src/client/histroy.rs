@@ -1,16 +1,32 @@
-use crossbeam::queue::ArrayQueue;
+use parking_lot::RwLock;
+use serde::{
+    ser::{SerializeStruct},
+    Serialize,
+};
+use slice_deque::SliceDeque;
 
 #[derive(Debug)]
-pub struct Histroy {
-    pub cs: ArrayQueue<pb::CsMsg>,
-    pub sc: ArrayQueue<pb::ScMsg>,
+pub struct History {
+    pub cs: RwLock<SliceDeque<pb::CsMsg>>,
+    pub sc: RwLock<SliceDeque<pb::ScMsg>>,
+}
+impl Serialize for History {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut s = serializer.serialize_struct("history", 2)?;
+        s.serialize_field("cs", self.cs.read().as_slice())?;
+        s.serialize_field("sc", self.sc.read().as_slice())?;
+        s.end()
+    }
 }
 
-impl Histroy {
+impl History {
     pub fn new() -> Self {
         Self {
-            cs: ArrayQueue::new(512),
-            sc: ArrayQueue::new(512),
+            cs: RwLock::new(SliceDeque::with_capacity(512)),
+            sc: RwLock::new(SliceDeque::with_capacity(512)),
         }
     }
 }

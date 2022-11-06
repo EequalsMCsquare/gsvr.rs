@@ -13,6 +13,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 			api::add_fclient,
 			api::drop_fclient,
 			api::fclient_request,
+            api::fclient_history
 		])
         .setup(|app| {
             let (fclients, mut frx) = state::ClientMgr::<u64>::new();

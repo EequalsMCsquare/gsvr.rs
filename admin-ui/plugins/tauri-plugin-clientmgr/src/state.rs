@@ -7,7 +7,7 @@ use tokio::sync::{broadcast, mpsc, oneshot};
 #[derive(Debug)]
 pub(crate) struct ClientProxy<T> {
     pub(crate) id: T,
-    pub(crate) history: Arc<admin::Histroy>,
+    pub(crate) history: Arc<admin::History>,
     pub(crate) closechan: oneshot::Sender<()>,
     pub(crate) join: tauri::async_runtime::JoinHandle<anyhow::Result<()>>,
 }

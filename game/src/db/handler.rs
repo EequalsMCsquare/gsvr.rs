@@ -24,7 +24,7 @@ impl DBComponent {
     pub(super) async fn on_DBBulkUpsertReq(
         db: &mongodb::Database,
         coll: &str,
-        data: Vec<Binary>,
+        data: Vec<Document>,
     ) -> Result<()> {
         Ok(())
     }

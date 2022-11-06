@@ -9,7 +9,7 @@ use tokio::sync::{mpsc, oneshot};
 
 pub struct CastTx<P: Proto, NameEnum: Send, Error: Send> {
     tx: mpsc::Sender<ChanCtx<P, NameEnum, Error>>,
-    from: NameEnum,
+    to: NameEnum,
 }
 
 impl<P, NameEnum, Error> CastTx<P, NameEnum, Error>
@@ -19,13 +19,13 @@ where
     Error: Send,
 {
     pub async fn cast(&self, msg: P) {
-        if let Err(err) = self.tx.send(ChanCtx::new_cast(msg, self.from)).await {
+        if let Err(err) = self.tx.send(ChanCtx::new_cast(msg, self.to)).await {
             tracing::error!("fail to cast. {}", err)
         }
     }
 
     pub fn blocking_cast(&self, msg: P) {
-        if let Err(err) = self.tx.blocking_send(ChanCtx::new_cast(msg, self.from)) {
+        if let Err(err) = self.tx.blocking_send(ChanCtx::new_cast(msg, self.to)) {
             tracing::error!("fail to cast. {}", err)
         }
     }
@@ -52,7 +52,7 @@ where
 
     fn cast_tx(&self, name: NameEnum) -> CastTx<P, NameEnum, Self::Error> {
         CastTx {
-            from: self.name(),
+            to: self.name(),
             tx: self.get_tx(name).clone(),
         }
     }

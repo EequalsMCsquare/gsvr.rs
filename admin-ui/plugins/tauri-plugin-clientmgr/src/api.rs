@@ -1,4 +1,6 @@
-use admin::proto;
+use std::sync::Arc;
+
+use admin::{proto, History};
 use serde::Serialize;
 use tauri::State;
 use tokio::sync::oneshot;
@@ -6,7 +8,7 @@ use tracing::instrument;
 
 use crate::{
     error::{Error, Result},
-    state::{ClientProxy, ClientMgr},
+    state::{ClientMgr, ClientProxy},
 };
 
 #[tauri::command]
@@ -61,13 +63,15 @@ pub async fn drop_fclient(player_id: u64, mgr: State<'_, ClientMgr<u64>>) -> Res
     }
 }
 
-pub fn fclient_history(
-    player_id: u64,
-    mgr: State<'_, ClientMgr<u64>>,
-) -> Result<(Vec<pb::CsMsg>, Vec<pb::ScMsg>)> {
+#[tauri::command]
+#[instrument]
+pub fn fclient_history(player_id: u64, mgr: State<'_, ClientMgr<u64>>) -> Result<String> {
     if let Some(client) = mgr.clients.read().unwrap().get(&player_id) {
+        let res = serde_json::to_string_pretty(client.history.as_ref())?;
+        tracing::debug!("{}", res);
+        return Ok(res);
     }
-    return Err(Error::FClientNotFound(player_id))
+    return Err(Error::FClientNotFound(player_id));
 }
 
 #[tauri::command]

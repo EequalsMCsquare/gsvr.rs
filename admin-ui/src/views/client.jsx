@@ -1,4 +1,4 @@
-import { Box, IconButton, Paper } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import BottomNav from "../components/bottomNav";
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -9,7 +9,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import AddClientDialog from "../components/addClientDialog";
 import ClientSession from "../components/clientSession";
 import { useDispatch, useSelector } from "react-redux";
-import { addFClient, addFClientCsMsg, addFClientScMsg, dropFClient, setCurrentClient } from "../features/clientSlice";
 import clientMgrApi from "tauri-plugin-clientmgr-api";
 
 
@@ -47,7 +46,6 @@ function ClientTabs() {
     }
 
     function addClient({ id, username, password, normalLogin }) {
-        console.log(id, username, password, normalLogin);
         if (!normalLogin) {
             // check duplicated
             if (clientList.findIndex(c => c.id === id) !== -1) {
@@ -95,7 +93,6 @@ function ClientTabs() {
 
 
 function ViewClient() {
-
     return (
         <Box>
             <ClientTabs />
