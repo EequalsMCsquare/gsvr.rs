@@ -1,11 +1,11 @@
-use std::cell::RefCell;
-use game_core::component::{Component, ComponentBuilder};
-use tokio::sync::mpsc;
+use super::{player_mgr::PlayerMgr, PlayComponent};
 use crate::{
     error::Error,
     hub::{ChanCtx, ChanProto, Hub, ModuleName},
 };
-use super::{player_mgr::PlayerMgr, PlayComponent};
+use gsfw::component;
+use std::cell::RefCell;
+use tokio::sync::mpsc;
 
 pub struct Builder {
     name: ModuleName,
@@ -13,11 +13,10 @@ pub struct Builder {
     brkr: Option<Hub>,
 }
 
-impl ComponentBuilder<ModuleName, ChanProto, Hub> for Builder {
-    type BrkrError = Error;
-    fn build(
-        self: Box<Self>,
-    ) -> Box<dyn Component<ModuleName, ChanProto, BrkrError = Self::BrkrError>> {
+impl component::ComponentBuilder<ChanProto, ModuleName, Hub, Error, mpsc::Receiver<ChanCtx>>
+    for Builder
+{
+    fn build(self: Box<Self>) -> Box<dyn component::Component<ChanProto, ModuleName, Error>> {
         Box::new(PlayComponent {
             players: RefCell::new(PlayerMgr::new()),
             rx: self.rx.unwrap(),

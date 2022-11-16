@@ -1,7 +1,6 @@
-use game_core::broker::Broker;
+use gsfw::chanrpc::broker::Broker;
 
 use crate::hub::{ChanProto, ModuleName, TimerArgs};
-
 use super::{TimerComponent, TimerMeta};
 
 #[allow(non_snake_case)]
@@ -13,7 +12,7 @@ impl TimerComponent {
         {
             let mut curr = self.curr.write();
             let curr_ref = curr.as_ref().unwrap();
-            cast_tx = self.hub.cast_tx(curr_ref.from);
+            cast_tx = Broker::cast_tx(&self.hub, curr_ref.from);
             ntf = ChanProto::TimerTriggerNtf {
                 typ: curr_ref.typ,
                 args: curr_ref.args.clone(),

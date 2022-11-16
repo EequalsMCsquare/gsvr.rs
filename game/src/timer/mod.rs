@@ -2,13 +2,13 @@ use crate::{
     error::Error,
     hub::{ChanCtx, ChanProto, Hub, ModuleName, TimerArgs},
 };
-use game_core::component::Component;
 use parking_lot::RwLock;
 use slice_deque::SliceDeque;
 use tokio::sync::mpsc;
 mod builder;
 mod handler;
 pub use builder::Builder;
+use gsfw::component;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -32,14 +32,16 @@ pub struct TimerComponent {
 }
 
 #[async_trait::async_trait]
-impl Component<ModuleName, ChanProto> for TimerComponent {
-    type BrkrError = Error;
-
+impl component::Component<ChanProto, ModuleName, Error> for TimerComponent {
     fn name(&self) -> ModuleName {
         ModuleName::Timer
     }
 
-    async fn run(mut self: Box<Self>) -> anyhow::Result<()> {
+    async fn init(&mut self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    async fn run(mut self: Box<Self>) -> Result<(), Error>{
         loop {
             tokio::select! {
                 Some(req) = self.rx.recv() => {

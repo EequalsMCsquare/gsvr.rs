@@ -1,5 +1,5 @@
 use derivative::Derivative;
-use game_core::broker::Proto;
+use gsfw::chanrpc;
 use mongodb::bson;
 use std::fmt::Debug;
 
@@ -65,7 +65,7 @@ pub enum ChanProto {
     CtrlShutdown,
 }
 
-impl Proto for ChanProto {
+impl chanrpc::Proto for ChanProto {
     fn proto_shutdown() -> Self {
         Self::CtrlShutdown
     }

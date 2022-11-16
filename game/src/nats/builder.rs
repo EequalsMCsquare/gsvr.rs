@@ -2,7 +2,7 @@ use crate::{
     error::Error,
     hub::{ChanCtx, ChanProto, Hub, ModuleName},
 };
-use game_core::component::ComponentBuilder;
+use gsfw::component;
 use tokio::sync::mpsc;
 
 pub struct Builder {
@@ -19,12 +19,10 @@ impl Builder {
     }
 }
 
-impl ComponentBuilder<ModuleName, ChanProto, Hub> for Builder {
-    type BrkrError = Error;
-    fn build(
-        self: Box<Self>,
-    ) -> Box<dyn game_core::component::Component<ModuleName, ChanProto, BrkrError = Self::BrkrError>>
-    {
+impl component::ComponentBuilder<ChanProto, ModuleName, Hub, Error, mpsc::Receiver<ChanCtx>>
+    for Builder
+{
+    fn build(self: Box<Self>) -> Box<dyn component::Component<ChanProto, ModuleName, Error>> {
         Box::new(super::NatsComponent {
             nats: self.nats.unwrap(),
             hub: self.brkr.unwrap(),

@@ -1,5 +1,5 @@
 use futures::StreamExt;
-use game_core::broker::Broker;
+use gsfw::chanrpc::broker::AsyncBroker;
 
 use crate::{hub::{ChanProto, ModuleName}, error::{Result, Error}};
 
@@ -27,7 +27,7 @@ impl NatsComponent {
                                 continue;
                             }
                         };
-                        hub.cast(sender, proto).await;
+                        AsyncBroker::cast(&hub, sender, proto).await;
                     }
                 });
             }

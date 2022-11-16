@@ -1,12 +1,13 @@
 mod proto;
-use crate::error::Error;
-use game_core::broker::{self, Broker};
-use hashbrown::HashMap;
+use gsfw::chanrpc;
 pub use proto::{ChanProto, TimerArgs};
+use std::collections::HashMap;
 use std::fmt::Debug;
 use tokio::sync::mpsc;
 
-pub type ChanCtx = broker::ChanCtx<proto::ChanProto, ModuleName, crate::error::Error>;
+use crate::error::Error;
+
+pub type ChanCtx = chanrpc::ChanCtx<proto::ChanProto, ModuleName, crate::error::Error>;
 
 #[derive(Debug, Clone)]
 pub struct Hub {
@@ -25,13 +26,20 @@ pub enum ModuleName {
     Timer,
 }
 
-impl Broker<proto::ChanProto, ModuleName> for Hub {
-    type Error = Error;
+impl
+    chanrpc::broker::Broker<
+        proto::ChanProto,
+        ModuleName,
+        Error,
+        mpsc::Sender<ChanCtx>,
+        mpsc::Receiver<ChanCtx>,
+    > for Hub
+{
     fn name(&self) -> ModuleName {
         self.name
     }
 
-    fn get_tx<'a>(&'a self, name: ModuleName) -> &'a mpsc::Sender<ChanCtx> {
+    fn tx<'a>(&'a self, name: ModuleName) -> &'a mpsc::Sender<ChanCtx> {
         match name {
             ModuleName::Play => &self.play,
             ModuleName::Nats => &self.nats,
@@ -49,4 +57,19 @@ impl Broker<proto::ChanProto, ModuleName> for Hub {
             timer: tx_map.get(&ModuleName::Timer).unwrap().clone(),
         }
     }
+
+    fn channel(size: usize) -> (mpsc::Sender<ChanCtx>, mpsc::Receiver<ChanCtx>) {
+        mpsc::channel(size)
+    }
 }
+
+// impl
+//     gsfw::chanrpc::broker::AsyncBroker<
+//         ChanProto,
+//         ModuleName,
+//         Error,
+//         mpsc::Sender<ChanCtx>,
+//         mpsc::Receiver<ChanCtx>,
+//     > for Hub
+// {
+// }

@@ -1,5 +1,3 @@
-use anyhow::anyhow;
-use game_core::component::Component;
 use pb::Message;
 use tokio::sync::mpsc;
 mod builder;
@@ -9,6 +7,7 @@ use crate::{
     hub::{ChanCtx, ChanProto, Hub, ModuleName},
 };
 pub use builder::Builder;
+use gsfw::component;
 
 pub struct NatsComponent {
     nats: async_nats::Client,
@@ -17,14 +16,16 @@ pub struct NatsComponent {
 }
 
 #[async_trait::async_trait]
-impl Component<ModuleName, ChanProto> for NatsComponent {
-    type BrkrError = Error;
-
+impl component::Component<ChanProto, ModuleName, Error> for NatsComponent {
     fn name(&self) -> ModuleName {
         ModuleName::Nats
     }
 
-    async fn run(mut self: Box<Self>) -> anyhow::Result<()> {
+    async fn init(&mut self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    async fn run(mut self: Box<Self>) -> Result<(), Error> {
         let mut msg = pb::ScProto::default();
         loop {
             match self.rx.recv().await {
@@ -64,7 +65,10 @@ impl Component<ModuleName, ChanProto> for NatsComponent {
                         tracing::error!("receive unhandled ChanProto. {:?}", _unhandled_msg);
                     }
                 },
-                None => return Err(anyhow!("receive none")),
+                None => {
+                    tracing::info!("recv None, all sender drop");
+                    return Ok(())
+                },
             }
         }
     }

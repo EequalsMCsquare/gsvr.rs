@@ -1,4 +1,4 @@
-use game_core::component::{Component, ComponentBuilder};
+use gsfw::component;
 use parking_lot::RwLock;
 use tokio::sync::mpsc;
 
@@ -14,12 +14,10 @@ pub struct Builder {
     brkr: Option<Hub>,
 }
 
-impl ComponentBuilder<ModuleName, ChanProto, Hub> for Builder {
-    type BrkrError = Error;
-
-    fn build(
-        self: Box<Self>,
-    ) -> Box<dyn Component<ModuleName, ChanProto, BrkrError = Self::BrkrError>> {
+impl component::ComponentBuilder<ChanProto, ModuleName, Hub, Error, mpsc::Receiver<ChanCtx>>
+    for Builder
+{
+    fn build(self: Box<Self>) -> Box<dyn component::Component<ChanProto, ModuleName, Error>> {
         let (tx, rx) = mpsc::channel(4);
         Box::new(TimerComponent {
             hub: self.brkr.unwrap(),

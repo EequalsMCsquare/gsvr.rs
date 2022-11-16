@@ -10,7 +10,10 @@ use crate::{
 };
 use anyhow::{anyhow, bail};
 pub use builder::Builder;
-use game_core::{broker::Broker, component::Component};
+use gsfw::{
+    chanrpc::broker::{AsyncBroker, Broker},
+    component,
+};
 use pb::Message;
 use player_mgr::PlayerMgr;
 use std::{cell::RefCell, error::Error as StdError};
@@ -23,23 +26,23 @@ pub struct PlayComponent {
 }
 
 #[async_trait::async_trait]
-impl Component<ModuleName, ChanProto> for PlayComponent {
-    type BrkrError = Error;
+impl component::Component<ChanProto, ModuleName, Error> for PlayComponent {
     fn name(&self) -> ModuleName {
         ModuleName::Play
     }
 
-    async fn run(mut self: Box<Self>) -> anyhow::Result<()> {
+    async fn run(mut self: Box<Self>) -> Result<(), Error> {
         std::thread::spawn(move || self._run())
             .join()
-            .map_err(|err| anyhow!("JoinError: {:?}", err))?
+            .map_err(|err| anyhow!("JoinError: {:?}", err))
+            .unwrap()
+            .unwrap();
+        Ok(())
     }
 
-    async fn init(
-        &mut self,
-    ) -> std::result::Result<(), Box<(dyn StdError + std::marker::Send + 'static)>> {
+    async fn init(&mut self) -> Result<(), Error> {
         // register player message to mpsc::Receiver
-        self.init_sub_pmsg().await?;
+        self.init_sub_pmsg().await.unwrap();
         Ok(())
     }
 }
@@ -68,16 +71,15 @@ impl PlayComponent {
     async fn init_sub_pmsg(
         &mut self,
     ) -> std::result::Result<(), Box<(dyn StdError + std::marker::Send + 'static)>> {
-        if let Err(err) = self
-            .broker
-            .call(
-                ModuleName::Nats,
-                ChanProto::Sub2HubReq {
-                    topic: "cspmsg.*".to_string(),
-                    decode_fn: Self::pmsg_decode_fn,
-                },
-            )
-            .await
+        if let Err(err) = AsyncBroker::call(
+            &self.broker,
+            ModuleName::Nats,
+            ChanProto::Sub2HubReq {
+                topic: "cspmsg.*".to_string(),
+                decode_fn: Self::pmsg_decode_fn,
+            },
+        )
+        .await
         {
             return Err(anyhow!("fail to register player message to self broker. {}", err).into());
         }
@@ -86,7 +88,9 @@ impl PlayComponent {
 
     fn sendp(&self, player_id: u64, msg: pb::ScMsg) {
         tracing::debug!("send player-{} {:?}", player_id, msg);
-        self.broker.blocking_cast(
+        // TODO
+        Broker::blocking_cast(
+            &self.broker,
             ModuleName::Nats,
             ChanProto::ScPMsgNtf {
                 player_id,

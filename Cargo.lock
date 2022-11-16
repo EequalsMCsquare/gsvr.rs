@@ -1227,8 +1227,8 @@ dependencies = [
  "config",
  "derivative",
  "futures",
- "game-core",
  "gconf",
+ "gsfw",
  "hashbrown",
  "mongodb",
  "parking_lot",
@@ -1244,21 +1244,6 @@ dependencies = [
  "tower",
  "tracing",
  "util",
-]
-
-[[package]]
-name = "game-core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "futures",
- "hashbrown",
- "pin-project",
- "slice-deque",
- "strum 0.24.1",
- "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -1508,6 +1493,22 @@ dependencies = [
  "glib-sys",
  "libc",
  "system-deps 6.0.2",
+]
+
+[[package]]
+name = "gsfw"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "crossbeam",
+ "futures",
+ "pin-project",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tower",
+ "tracing",
 ]
 
 [[package]]
@@ -4371,8 +4372,12 @@ checksum = "0bb2e075f03b3d66d8d8785356224ba688d2906a371015e225beeb65ca92c740"
 dependencies = [
  "bytes",
  "futures-core",
+ "futures-io",
  "futures-sink",
+ "futures-util",
+ "hashbrown",
  "pin-project-lite",
+ "slab",
  "tokio",
  "tracing",
 ]
