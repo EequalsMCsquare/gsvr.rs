@@ -75,7 +75,7 @@ impl PlayComponent {
             &self.broker,
             ModuleName::Nats,
             ChanProto::Sub2HubReq {
-                topic: "cspmsg.*".to_string(),
+                topic: "csp.*".to_string(),
                 decode_fn: Self::pmsg_decode_fn,
             },
         )

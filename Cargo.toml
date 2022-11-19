@@ -6,13 +6,11 @@ members = [
 	"admin",
 	"gconf",
 	"util",
-	"admin-ui/src-tauri",
-	"admin-ui/plugins/tauri-plugin-clientmgr",
-	"admin-ui/plugins/tauri-plugin-pbhint",
 ]
 
 [workspace.dependencies]
-gsfw = {path = "../gsfw"}
+# gsfw = {path = "../gsfw/gsfw", features = ["util"]}
+gsfw = {version = "0.1.1", features = ["util"]}
 async-trait = "0.1.57"
 parking_lot = { version = "0.12", features = ['serde'] }
 util = { path = "./util" }

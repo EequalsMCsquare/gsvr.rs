@@ -29,3 +29,25 @@ pub enum Env {
     Qa,
     Prod,
 }
+
+impl Into<&'static str> for Env {
+    fn into(self) -> &'static str {
+        match self {
+            Env::Local => "local",
+            Env::Dev => "dev",
+            Env::Qa => "qa",
+            Env::Prod => "prod",
+        }
+    }
+}
+
+impl Into<String> for Env {
+    fn into(self) -> String {
+        match self {
+            Env::Local => "local".to_string(),
+            Env::Dev => "dev".to_string(),
+            Env::Qa => "qa".to_string(),
+            Env::Prod => "prod".to_string(),
+        }
+    }
+}

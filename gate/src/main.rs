@@ -1,10 +1,12 @@
-mod agent;
+mod adaptor;
+mod codec;
+mod error;
 mod conf;
-mod make_agent;
-mod server;
-use server::Server;
-use util::{build_nats, init_logger};
+use bytes::Bytes;
+use gsfw::network::{AgentService, Gate};
 use tracing::debug;
+use util::{build_nats, init_logger};
+use error::Error;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -14,6 +16,17 @@ async fn main() -> anyhow::Result<()> {
 
     let nats = build_nats(c.mq).await?;
     debug!("NATS connected");
-    Server::new(format!("0.0.0.0:{}", c.port), nats).serve().await;
+    let adaptor_builder = adaptor::NatsAdaptorBuilder {
+        env: c.env.into(),
+        nats,
+    };
+    let service = AgentService::<_, _, _, Bytes>::new(
+        codec::EncoderImpl::default(),
+        codec::DecoderImpl::default(),
+        adaptor_builder,
+    );
+    Gate::new(format!("0.0.0.0:{}", c.port))
+        .serve(service)
+        .await;
     Ok(())
 }

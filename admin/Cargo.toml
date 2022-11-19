@@ -12,9 +12,9 @@ name = "admin"
 path = "src/main.rs"
 
 
-
 [dependencies]
-parking_lot = {workspace = true}
+parking_lot = { workspace = true }
+tower = { workspace = true }
 pb = { workspace = true }
 util = { workspace = true }
 gconf = { workspace = true }
@@ -25,7 +25,11 @@ anyhow = { worksapce = true }
 futures = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
+slice-deque = { workspace = true }
+gsfw = { workspace = true }
+async-trait = { workspace = true }
 dialoguer = { version = "^0.10" }
 clap = { version = "4.0", features = ["derive"] }
 crossbeam = "0.8.2"
-slice-deque = {workspace = true}
+tui = "0.19"
+crossterm = "0.25"

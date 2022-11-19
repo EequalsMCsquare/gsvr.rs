@@ -1,4 +1,4 @@
-mod fast_login_client;
-mod histroy;
-pub use fast_login_client::FastLoginClient;
-pub use histroy::History;
+pub mod console_adaptor;
+pub mod codec;
+pub mod client;
+use client::{ClientInfo, ClientCsMsg, ClientScMsg};
