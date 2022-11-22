@@ -21,6 +21,13 @@ pub struct ConfigMQ {
     pub port: u16,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct ConfigJwt {
+    pub algorithm: String,
+    pub encode_key: String,
+    pub decode_key: String,
+}
+
 #[derive(Deserialize, Debug, Default, Clone)]
 pub enum Env {
     #[default]

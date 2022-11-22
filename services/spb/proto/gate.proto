@@ -1,0 +1,17 @@
+syntax = "proto3";
+import "Enum.proto";
+package spb.auth;
+
+message GateLoginReq {
+    string token = 1;
+    int64 player_id = 2;
+}
+
+message GateLoginAck {
+    Enum.ErrCode err_code = 1;
+    uint64 session = 2;
+}
+
+service GateService {
+    rpc GateLogin (GateLoginReq) returns (GateLoginAck);
+}

@@ -1,0 +1,7 @@
+syntax = "proto3";
+package spb.Enum;
+
+enum ErrCode {
+    Success = 0;
+    Credential = 1;
+}

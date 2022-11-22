@@ -1,6 +1,11 @@
 mod logger;
 mod mongo;
 mod nats;
+mod password;
+pub mod jwt;
+pub use time::Duration;
 pub use logger::init_logger;
 pub use mongo::build_db;
 pub use nats::build_nats;
+pub use password::Password;
+pub use jwt::Jwt;
