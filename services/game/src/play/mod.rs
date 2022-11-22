@@ -14,7 +14,7 @@ use gsfw::{
     chanrpc::broker::{AsyncBroker, Broker},
     component,
 };
-use pb::Message;
+use cspb::Message;
 use player_mgr::PlayerMgr;
 use std::{cell::RefCell, error::Error as StdError};
 use tokio::sync::mpsc;
@@ -86,7 +86,7 @@ impl PlayComponent {
         Ok(())
     }
 
-    fn sendp(&self, player_id: u64, msg: pb::ScMsg) {
+    fn sendp(&self, player_id: u64, msg: cspb::ScMsg) {
         tracing::debug!("send player-{} {:?}", player_id, msg);
         // TODO
         Broker::blocking_cast(
@@ -102,7 +102,7 @@ impl PlayComponent {
     fn pmsg_decode_fn(msg: async_nats::Message) -> anyhow::Result<ChanProto> {
         if let Some(strpid) = msg.subject.split('.').skip(1).last() {
             if let Ok(num) = strpid.parse() {
-                let proto = match pb::CsProto::decode(msg.payload) {
+                let proto = match cspb::CsProto::decode(msg.payload) {
                     Ok(csproto) => csproto,
                     Err(err) => return Err(anyhow!("{:?}", err)),
                 };

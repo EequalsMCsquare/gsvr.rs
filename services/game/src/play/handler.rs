@@ -2,7 +2,7 @@ use super::{player, PlayComponent};
 use anyhow::anyhow;
 
 impl PlayComponent {
-    pub fn handle_pmsg(&self, player_id: u64, msg: pb::CsMsg) {
+    pub fn handle_pmsg(&self, player_id: u64, msg: cspb::CsMsg) {
         let mut players = self.players.borrow_mut();
         let player_ref;
         if let Some(player_model) = players.get_player(player_id) {
@@ -16,7 +16,7 @@ impl PlayComponent {
             };
         }
         if let Err(err) = match msg {
-            pb::CsMsg::CsEcho(msg) => self.on_CsEcho(player_ref, msg),
+            cspb::CsMsg::CsEcho(msg) => self.on_CsEcho(player_ref, msg),
             _um => Err(anyhow!(
                 "[play] unhandled player message from player-{}. {:?}",
                 player_id,
@@ -28,8 +28,8 @@ impl PlayComponent {
     }
 
     #[allow(non_snake_case)]
-    fn on_CsEcho(&self, player: &player::Model, msg: pb::CsEcho) -> anyhow::Result<()> {
-        let resp = pb::ScMsg::ScEcho(pb::ScEcho {
+    fn on_CsEcho(&self, player: &player::Model, msg: cspb::CsEcho) -> anyhow::Result<()> {
+        let resp = cspb::ScMsg::ScEcho(cspb::ScEcho {
             reply: format!("you said: {}", msg.content),
         });
         self.sendp(player.pid, resp);

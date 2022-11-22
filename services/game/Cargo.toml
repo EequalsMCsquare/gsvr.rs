@@ -10,7 +10,7 @@ gsfw = {workspace = true}
 thiserror = {workspace = true}
 util = { workspace = true }
 gconf = { workspace = true }
-pb = { workspace = true }
+cspb = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true}
 async-nats = { workspace = true}

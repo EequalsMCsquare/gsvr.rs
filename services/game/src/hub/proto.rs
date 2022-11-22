@@ -9,11 +9,11 @@ use std::fmt::Debug;
 pub enum ChanProto {
     CsPMsgNtf {
         player_id: u64,
-        message: pb::CsMsg,
+        message: cspb::CsMsg,
     },
     ScPMsgNtf {
         player_id: u64,
-        message: pb::ScMsg,
+        message: cspb::ScMsg,
     },
 
     // subscribe nats topic and get a subscriber

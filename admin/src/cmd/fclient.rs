@@ -29,7 +29,7 @@ pub async fn run(gate: String, player_id: u64) -> anyhow::Result<()> {
                         // if line == "exit" {
                         //     return Ok(())
                         // }
-                        br_tx.send(ClientCsMsg { ids: vec![player_id], payload: pb::CsMsg::CsEcho(pb::CsEcho {
+                        br_tx.send(ClientCsMsg { ids: vec![player_id], payload: cspb::CsMsg::CsEcho(cspb::CsEcho {
                             content: line
                             })
                         }).unwrap();

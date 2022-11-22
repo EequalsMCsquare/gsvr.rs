@@ -15,11 +15,11 @@ impl Default for ClientInfo {
 #[derive(Clone, Debug)]
 pub struct ClientCsMsg {
     pub ids: Vec<u64>,
-    pub payload: pb::CsMsg,
+    pub payload: cspb::CsMsg,
 }
 
 #[derive(Clone, Debug)]
 pub struct ClientScMsg {
     pub id: u64,
-    pub payload: pb::ScMsg,
+    pub payload: cspb::ScMsg,
 }

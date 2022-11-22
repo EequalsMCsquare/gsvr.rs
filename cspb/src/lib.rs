@@ -1,13 +1,13 @@
 pub mod codec;
 mod r#enum {
-    include!("./pb.r#enum.rs");
+    include!("./cspb.r#enum.rs");
 }
 mod msg {
-    include!("./pb.msg.rs");
+    include!("./cspb.msg.rs");
 }
 
 mod registry {
-    include!("./pb.registry.rs");
+    include!("./cspb.registry.rs");
 }
 
 pub use msg::*;

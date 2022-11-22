@@ -1,7 +1,7 @@
 syntax = "proto3";
 import "Enum.proto";
 import "01_player.proto";
-package pb.registry;
+package cspb.registry;
 
 message CsProto{
     oneof payload {

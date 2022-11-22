@@ -10,7 +10,7 @@ use gsfw::component;
 use tokio::sync::mpsc;
 
 pub struct DBComponent {
-    broker: Hub,
+    _broker: Hub,
     rx: mpsc::Receiver<ChanCtx>,
     database: mongodb::Database,
 }

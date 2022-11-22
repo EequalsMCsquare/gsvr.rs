@@ -7,7 +7,7 @@ impl super::Model {
                 name: format!("player-{}", player_id),
                 level: 1,
                 exp: 0,
-                gender: pb::Gender::Hidden,
+                gender: cspb::Gender::Hidden,
             },
         }
     }

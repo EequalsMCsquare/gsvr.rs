@@ -1,5 +1,5 @@
 syntax = "proto3";
-package pb.Enum;
+package cspb.Enum;
 
 enum ErrCode {
     Success = 0;

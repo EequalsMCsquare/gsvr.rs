@@ -3,8 +3,9 @@ use crate::error::{Error, Result};
 use mongodb::bson::{Binary, Document};
 use std::result::Result as StdResult;
 
+#[allow(non_snake_case)]
+#[allow(unused)]
 impl DBComponent {
-    #[allow(non_snake_case)]
     pub(super) async fn on_DBLoadReq(
         db: &mongodb::Database,
         coll: &str,

@@ -18,7 +18,7 @@ pub struct ConsoleAdaptor {
 
 #[async_trait]
 impl network::Adaptor for ConsoleAdaptor {
-    type RecvItem = pb::CsMsg;
+    type RecvItem = cspb::CsMsg;
     type Enc = codec::Encoder;
     type Dec = codec::Decoder;
 
@@ -31,16 +31,16 @@ impl network::Adaptor for ConsoleAdaptor {
         R: AsyncRead + Send + Unpin,
         W: AsyncWrite + Send + Unpin,
     {
-        let csmsg = pb::CsMsg::CsFastLogin(pb::CsFastLogin {
+        let csmsg = cspb::CsMsg::CsFastLogin(cspb::CsFastLogin {
             player_id: self.client.id,
         });
         sink.send(csmsg).await?;
         if let Some(msg) = stream.next().await {
             let msg = msg?;
             match msg {
-                pb::ScMsg::ScLogin(_msg) => todo!(),
-                pb::ScMsg::ScFastLogin(msg) => {
-                    if msg.err_code() == pb::ErrCode::Success {
+                cspb::ScMsg::ScLogin(_msg) => todo!(),
+                cspb::ScMsg::ScFastLogin(msg) => {
+                    if msg.err_code() == cspb::ErrCode::Success {
                         tracing::debug!("auth success");
                         return Ok((stream, sink));
                     }
@@ -56,7 +56,7 @@ impl network::Adaptor for ConsoleAdaptor {
     // send sc to console
     async fn send(
         &mut self,
-        msg: Result<pb::ScMsg, anyhow::Error>,
+        msg: Result<cspb::ScMsg, anyhow::Error>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let msg = msg?;
         if let Err(err) = self

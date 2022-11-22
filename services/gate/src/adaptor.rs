@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures::{SinkExt, StreamExt};
 use gsfw::{codec, network::*};
-use pb::Message;
+use cspb::Message;
 use std::sync::atomic::AtomicU64;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::{FramedRead, FramedWrite};
@@ -59,17 +59,17 @@ impl Adaptor for NatsAdaptor {
     {
         if let Some(msg) = stream.next().await {
             let msg = msg?;
-            let pbmsg = pb::CsProto::decode(msg)?;
+            let pbmsg = cspb::CsProto::decode(msg)?;
             if let Some(payload) = pbmsg.payload {
                 match payload {
-                    pb::CsMsg::CsLogin(_msg) => {
+                    cspb::CsMsg::CsLogin(_msg) => {
                         todo!()
                     }
-                    pb::CsMsg::CsFastLogin(msg) => {
+                    cspb::CsMsg::CsFastLogin(msg) => {
                         self.player_id = msg.player_id;
-                        let reply = pb::ScProto {
-                            payload: Some(pb::ScMsg::ScFastLogin(pb::ScFastLogin {
-                                err_code: pb::ErrCode::Success.into(),
+                        let reply = cspb::ScProto {
+                            payload: Some(cspb::ScMsg::ScFastLogin(cspb::ScFastLogin {
+                                err_code: cspb::ErrCode::Success.into(),
                             })),
                         };
                         sink.send(reply.encode_to_vec().into()).await?;

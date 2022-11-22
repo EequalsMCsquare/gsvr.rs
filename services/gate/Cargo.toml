@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 util = { workspace = true }
 gconf = { workspace = true }
-pb = { workspace = true }
+cspb = { workspace = true }
 tokio = { workspace = true }
 bytes = { workspace = true }
 tracing = { workspace = true }

@@ -1,16 +1,16 @@
 use anyhow::anyhow;
 use bytes::{Buf, BufMut};
 use gsfw::codec;
-use pb::Message;
+use cspb::Message;
 
 #[derive(Clone)]
 pub struct Encoder;
 
-impl codec::Encoder<pb::CsMsg> for Encoder {
+impl codec::Encoder<cspb::CsMsg> for Encoder {
     type Error = anyhow::Error;
 
-    fn encode(&mut self, item: pb::CsMsg, dst: &mut bytes::BytesMut) -> Result<(), Self::Error> {
-        let msg = pb::CsProto {
+    fn encode(&mut self, item: cspb::CsMsg, dst: &mut bytes::BytesMut) -> Result<(), Self::Error> {
+        let msg = cspb::CsProto {
             payload: Some(item),
         };
         dst.put_u32(msg.encoded_len() as u32);
@@ -25,7 +25,7 @@ pub struct Decoder {
 }
 
 impl codec::Decoder for Decoder {
-    type Item = pb::ScMsg;
+    type Item = cspb::ScMsg;
 
     type Error = anyhow::Error;
 
@@ -38,7 +38,7 @@ impl codec::Decoder for Decoder {
             return Ok(None);
         }
         let payload_buf = src.copy_to_bytes(self.ctx_payload_len);
-        let msg = pb::ScProto::decode(payload_buf)?;
+        let msg = cspb::ScProto::decode(payload_buf)?;
         match msg.payload {
             Some(payload) => Ok(Some(payload)),
             None => Err(anyhow!("message payload is None")),

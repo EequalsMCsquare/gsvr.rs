@@ -1,6 +1,6 @@
 syntax = "proto3";
 import "Enum.proto";
-package pb.msg;
+package cspb.msg;
 
 message CsFastLogin {
     uint64 player_id = 1;

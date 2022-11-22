@@ -1,4 +1,4 @@
-use pb::Message;
+use cspb::Message;
 use tokio::sync::mpsc;
 mod builder;
 mod handler;
@@ -26,7 +26,7 @@ impl component::Component<ChanProto, ModuleName, Error> for NatsComponent {
     }
 
     async fn run(mut self: Box<Self>) -> Result<(), Error> {
-        let mut msg = pb::ScProto::default();
+        let mut msg = cspb::ScProto::default();
         loop {
             match self.rx.recv().await {
                 Some(req) => match &req.payload {

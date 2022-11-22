@@ -19,7 +19,7 @@ impl component::ComponentBuilder<ChanProto, ModuleName, Hub, Error, mpsc::Receiv
 {
     fn build(self: Box<Self>) -> Box<dyn component::Component<ChanProto, ModuleName, Error>> {
         Box::new(DBComponent {
-            broker: self.brkr.unwrap(),
+            _broker: self.brkr.unwrap(),
             database: self.database.unwrap(),
             rx: self.rx.unwrap(),
         })
