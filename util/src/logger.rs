@@ -1,6 +1,6 @@
+use gconf::ConfigLog;
 use std::{io, path::Path};
 use tracing_subscriber::EnvFilter;
-use gconf::ConfigLog;
 
 /// initialize logger for an app
 /// # example
@@ -23,11 +23,13 @@ use gconf::ConfigLog;
 /// ```
 pub fn init_logger(cfg: ConfigLog) {
     let builder = tracing_subscriber::FmtSubscriber::builder()
-        .with_level(true)
         .with_env_filter(EnvFilter::from_default_env())
         .with_writer(io::stdout)
-        .with_file(true)
-        .with_line_number(true);
+        .with_level(cfg.enable_level.unwrap_or(true))
+        .with_file(cfg.enable_file.unwrap_or(true))
+        .with_line_number(cfg.enable_line.unwrap_or(true))
+        .with_thread_ids(cfg.enable_thread_id.unwrap_or(false))
+        .with_thread_names(cfg.enable_thread_name.unwrap_or(false));
     let output = cfg.output.unwrap_or("stdout".to_string());
     match output.as_str() {
         "stdout" => builder.with_writer(io::stdout).init(),

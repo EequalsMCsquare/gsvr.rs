@@ -1,6 +1,11 @@
 [log]
 level = "debug"
 output = "stdout"
+enable_level = true
+enable_file = true
+enable_line = true
+enable_thread_name = false
+enable_thread_id = false
 
 [database]
 host = "192.168.1.4"

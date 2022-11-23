@@ -5,6 +5,11 @@ use serde::Deserialize;
 pub struct ConfigLog {
     pub level: Option<String>,
     pub output: Option<String>,
+    pub enable_level: Option<bool>,
+    pub enable_file: Option<bool>,
+    pub enable_line: Option<bool>,
+    pub enable_thread_name: Option<bool>,
+    pub enable_thread_id: Option<bool>
 }
 
 #[derive(Deserialize, Debug, Default, Clone)]
