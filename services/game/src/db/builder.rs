@@ -11,7 +11,7 @@ pub struct Builder {
     name: ModuleName,
     rx: Option<mpsc::Receiver<ChanCtx>>,
     brkr: Option<Hub>,
-    database: Option<mongodb::Database>,
+    database: Option<sqlx::PgPool>,
 }
 
 impl component::ComponentBuilder<ChanProto, ModuleName, Hub, Error, mpsc::Receiver<ChanCtx>>
@@ -45,7 +45,7 @@ impl Builder {
         }
     }
 
-    pub fn with_db(mut self, database: mongodb::Database) -> Self {
+    pub fn with_db(mut self, database: sqlx::PgPool) -> Self {
         self.database = Some(database);
         self
     }

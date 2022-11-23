@@ -6,15 +6,14 @@ use bytes::Bytes;
 use error::Error;
 use gsfw::network::{AgentService, Gate};
 use tracing::debug;
-use util::{build_nats, init_logger};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let c = conf::Config::parse("etc/gate")?;
-    init_logger(c.log);
+    util::logger::init(c.log);
     debug!("logger init complete");
 
-    let nats = build_nats(c.mq).await?;
+    let nats = util::nats::build(c.mq).await?;
     debug!("NATS connected");
     let auth = spb::AuthServiceClient::connect("localhost:8101").await?;
     debug!("AUTH_SVC connected");

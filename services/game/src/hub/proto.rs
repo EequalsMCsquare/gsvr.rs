@@ -1,6 +1,5 @@
 use derivative::Derivative;
 use gsfw::chanrpc;
-use mongodb::bson;
 use std::fmt::Debug;
 
 #[allow(dead_code)]
@@ -31,13 +30,6 @@ pub enum ChanProto {
         decode_fn: fn(async_nats::Message) -> anyhow::Result<ChanProto>,
     },
     Sub2HubAck,
-
-    // load data from mongodb
-    DBLoadReq {
-        coll: String,
-        filter: Option<bson::Document>,
-    },
-    DBLoadAck(bson::Binary),
 
     // start a new timer
     NewTimerReq {

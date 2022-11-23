@@ -31,8 +31,12 @@ CREATE TABLE IF NOT EXISTS public.players
     "updatedAt" timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
     "deletedAt" timestamp without time zone,
     "lastLogin" timestamp without time zone,
-    CONSTRAINT players_pk PRIMARY KEY ("accountId", id)
+    CONSTRAINT players_pk PRIMARY KEY ("accountId", id),
+    CONSTRAINT players_account_name_key UNIQUE (name, "accountId")
 );
+
+COMMENT ON CONSTRAINT players_account_name_key ON public.players
+    IS 'players from different account may have the same name, but players.name in the same account must be unique';
 
 -- add foreign key constrain players.account_id -> accounts.id
 ALTER TABLE IF EXISTS public.players

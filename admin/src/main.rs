@@ -6,7 +6,7 @@ use util::gconf::ConfigLog;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    util::init_logger(ConfigLog {
+    util::logger::init(ConfigLog {
         level: Default::default(),
         output: Some("stdout".to_string()),
         ..Default::default()

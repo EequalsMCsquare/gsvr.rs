@@ -4,7 +4,7 @@ use axum::{Extension, Json};
 use models::ApiResult;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
+use sqlx::PgPool;
 use time::Duration;
 use util::{Jwt, Password};
 use validator::Validate;

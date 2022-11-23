@@ -17,15 +17,15 @@ fn main() -> anyhow::Result<()> {
 
     rt.block_on(async {
         let cfg = conf::Config::parse("etc/game")?;
-        util::init_logger(cfg.log);
-        let nats_client = util::build_nats(cfg.mq)
+        util::logger::init(cfg.log);
+        let nats_client = util::nats::build(cfg.mq)
             .await
             .expect("fail to build nats client");
-        let mongo_client = util::build_db(cfg.database)
+        let db = util::pgpool::build(cfg.database)
             .await
-            .expect("fail to build mongodb client");
+            .expect("fail to build PgPool");
         gs::GameBuilder::new()
-            .component(db::Builder::new().with_db(mongo_client))
+            .component(db::Builder::new().with_db(db))
             .component(timer::Builder::new())
             .component(nats::Builder::new().with_nats(nats_client))
             .component(play::Builder::new())

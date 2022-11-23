@@ -33,7 +33,7 @@ where
         }
     }
 
-    pub fn from_config(cfg: &ConfigJwt) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn build(cfg: ConfigJwt) -> Result<Self, Box<dyn std::error::Error>> {
         // load file
         let enckey = if cfg.encode_key.starts_with("file:") {
             let mut buf = String::new();

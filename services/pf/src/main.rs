@@ -1,4 +1,3 @@
-use sqlx::postgres::PgPoolOptions;
 use std::{net::SocketAddr, str::FromStr};
 use util::{jwt, Password};
 
@@ -10,26 +9,12 @@ mod models;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let c = conf::Config::parse("etc/pf")?;
-    util::init_logger(c.log);
-    let dbconn_str = format!(
-        "postres://{user}:{password}@{host}:{port}/{database}",
-        user = c.database.user,
-        password = c.database.password,
-        host = c.database.host,
-        port = c.database.port,
-        database = c.database.db_name.expect("database name must be provided")
-    );
-    tracing::debug!("database connect string: {}", dbconn_str);
+    util::logger::init(c.log);
     // database
-    let db = PgPoolOptions::new()
-        .max_connections(c.database.max_conn.unwrap_or(10))
-        .min_connections(c.database.min_conn.unwrap_or(1))
-        .idle_timeout(c.database.idle_timeout.map(Into::into))
-        .connect(&dbconn_str)
-        .await?;
+    let db = util::pgpool::build(c.database).await?;
     tracing::info!("database connect success");
     // jwt
-    let jwt = jwt::Jwt::<models::Claim>::from_config(&c.jwt)?;
+    let jwt = jwt::Jwt::<models::Claim>::build(c.jwt)?;
     // password
     let password = Password::new();
     // HTTP Server

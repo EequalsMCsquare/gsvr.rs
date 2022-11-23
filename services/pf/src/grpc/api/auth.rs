@@ -25,10 +25,13 @@ impl AuthService for AuthSvc {
                 err_code: spb::ErrCode::Success as i32,
                 id: claim.id,
             })),
-            Err(err) => Ok(tonic::Response::new(VerifyTokenAck {
-                err_code: spb::ErrCode::InvToken as i32,
-                id: Default::default(),
-            })),
+            Err(err) => {
+                tracing::error!("{:?}", err);
+                Ok(tonic::Response::new(VerifyTokenAck {
+                    err_code: spb::ErrCode::InvToken as i32,
+                    id: Default::default(),
+                }))
+            }
         }
     }
 }

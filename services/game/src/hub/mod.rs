@@ -62,14 +62,3 @@ impl
         mpsc::channel(size)
     }
 }
-
-// impl
-//     gsfw::chanrpc::broker::AsyncBroker<
-//         ChanProto,
-//         ModuleName,
-//         Error,
-//         mpsc::Sender<ChanCtx>,
-//         mpsc::Receiver<ChanCtx>,
-//     > for Hub
-// {
-// }

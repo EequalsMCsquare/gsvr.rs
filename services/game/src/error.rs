@@ -13,8 +13,6 @@ pub enum Error {
         "item is at max capacity. {cap_needed} empty spots are required but only {remain} left"
     )]
     ItemMax { cap_needed: u64, remain: u64 },
-    #[error(transparent)]
-    Database(#[from] mongodb::error::Error),
     #[error("no such record found in database. collection: {coll}")]
     NoDBRecord { coll: String },
     #[error(transparent)]

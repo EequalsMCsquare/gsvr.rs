@@ -21,7 +21,7 @@ use tracing_subscriber::EnvFilter;
 /// init_logger("klsdfjg");
 /// tracing::debug!("console will display this message");
 /// ```
-pub fn init_logger(cfg: ConfigLog) {
+pub fn init(cfg: ConfigLog) {
     let builder = tracing_subscriber::FmtSubscriber::builder()
         .with_env_filter(EnvFilter::from_default_env())
         .with_writer(io::stdout)

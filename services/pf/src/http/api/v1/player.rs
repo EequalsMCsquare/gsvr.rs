@@ -35,7 +35,7 @@ pub async fn get_players(
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct ReqCreatePlayer {
-    #[validate(length(min=6, max=16))]
+    #[validate(length(min = 6, max = 16))]
     name: String,
 }
 
@@ -47,6 +47,25 @@ pub struct AckCreatePlayer {
 pub async fn create_player(
     claim: Claim,
     Json(payload): Json<ReqCreatePlayer>,
+    Extension(db): Extension<PgPool>,
 ) -> ApiResult<AckCreatePlayer> {
-    todo!()
+    match sqlx::query!(
+        r#"INSERT INTO public.players ("accountId", id, name)
+                SELECT $1 as "accountId", COUNT(1)+1 as id, $2 as name FROM
+                public.players WHERE public.players."accountId" = $3
+            RETURNING id
+        "#,
+        claim.id,
+        payload.name,
+        claim.id
+    )
+    .fetch_one(&db)
+    .await
+    {
+        Ok(rec) => ApiResult::Ok(Some(AckCreatePlayer { player_id: rec.id })),
+        Err(err) => {
+            tracing::error!("{:?}", err);
+            ApiResult::DupIndex("player.name".to_string())
+        }
+    }
 }

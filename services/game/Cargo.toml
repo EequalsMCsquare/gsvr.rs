@@ -6,25 +6,25 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-gsfw = {workspace = true}
-thiserror = {workspace = true}
+gsfw = { workspace = true }
+thiserror = { workspace = true }
 util = { workspace = true }
 cspb = { workspace = true }
 tokio = { workspace = true }
-serde = { workspace = true}
-async-nats = { workspace = true}
+serde = { workspace = true }
+async-nats = { workspace = true }
 prost = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 futures = { workspace = true }
-tower = {workspace = true}
-config = {workspace = true}
-hashbrown = {workspace = true}
-async-trait = {workspace = true}
-mongodb = {workspace = true}
-time = {workspace = true}
-slice-deque = {workspace = true}
-parking_lot = {workspace = true}
-pin-project = {workspace = true}
-derivative = {workspace = true}
-strum = {workspace = true}
+tower = { workspace = true }
+config = { workspace = true }
+hashbrown = { workspace = true }
+async-trait = { workspace = true }
+time = { workspace = true }
+slice-deque = { workspace = true }
+parking_lot = { workspace = true }
+pin-project = { workspace = true }
+derivative = { workspace = true }
+strum = { workspace = true }
+sqlx = { workspace = true }
