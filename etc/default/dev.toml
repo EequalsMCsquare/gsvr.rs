@@ -16,12 +16,19 @@ password = "123aaa"
 max_conn = 10
 min_conn = 3
 # comment idle_timeout for no timeout
-idle_timeout = "1h"
+# idle_timeout = "1h"
 
 [mq]
 chanbuf = 1024
 host = "127.0.0.1"
 port = 4222
+#optional config
+conn_timeout = "5s"
+client_capacity = 128
+subscription_capacity = 1024
+request_timeout = "10s"
+ping_interval = "60s"
+flush_interval = "100ms"
 
 [jwt]
 algorithm = "RS256"

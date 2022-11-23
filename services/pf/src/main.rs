@@ -25,7 +25,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db = PgPoolOptions::new()
         .max_connections(c.database.max_conn.unwrap_or(10))
         .min_connections(c.database.min_conn.unwrap_or(1))
-        .idle_timeout(c.database.idle_timeout)
         .connect(&dbconn_str)
         .await?;
     tracing::info!("database connect success");

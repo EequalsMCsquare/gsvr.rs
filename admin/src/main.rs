@@ -8,6 +8,7 @@ async fn main() -> anyhow::Result<()> {
     util::init_logger(gconf::ConfigLog {
         level: Default::default(),
         output: Some("stdout".to_string()),
+        ..Default::default()
     });
     let args = cli::Args::parse();
     match args.subcmd {
