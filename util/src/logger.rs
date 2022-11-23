@@ -1,4 +1,4 @@
-use gconf::ConfigLog;
+use crate::gconf::ConfigLog;
 use std::{io, path::Path};
 use tracing_subscriber::EnvFilter;
 

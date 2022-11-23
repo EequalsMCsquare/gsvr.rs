@@ -2,6 +2,8 @@ mod logger;
 mod mongo;
 mod nats;
 mod password;
+mod custom_serde;
+pub mod gconf;
 pub mod jwt;
 pub use time::Duration;
 pub use logger::init_logger;

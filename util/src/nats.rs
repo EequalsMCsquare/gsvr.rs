@@ -1,11 +1,13 @@
-pub async fn build_nats(cfg: gconf::ConfigMQ) -> anyhow::Result<async_nats::Client> {
+use crate::gconf::ConfigMQ;
+
+pub async fn build_nats(cfg: ConfigMQ) -> anyhow::Result<async_nats::Client> {
     async_nats::ConnectOptions::default()
-        .connection_timeout(cfg.conn_timeout)
+        .connection_timeout(cfg.conn_timeout.into())
         .client_capacity(cfg.client_capacity)
         .subscription_capacity(cfg.subscription_capacity)
-        .request_timeout(Some(cfg.request_timeout))
-        .ping_interval(cfg.ping_interval)
-        .flush_interval(cfg.flush_interval)
+        .request_timeout(cfg.request_timeout.map(Into::into))
+        .ping_interval(cfg.ping_interval.into())
+        .flush_interval(cfg.flush_interval.into())
         .connect(format!("{}:{}", cfg.host, cfg.port))
         .await
         .map_err(Into::into)

@@ -2,10 +2,11 @@ use clap::Parser;
 mod cli;
 mod client;
 mod cmd;
+use util::gconf::ConfigLog;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    util::init_logger(gconf::ConfigLog {
+    util::init_logger(ConfigLog {
         level: Default::default(),
         output: Some("stdout".to_string()),
         ..Default::default()

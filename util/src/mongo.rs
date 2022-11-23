@@ -2,7 +2,9 @@ use std::time::Duration;
 
 use mongodb::options::{ClientOptions, ServerAddress};
 
-pub async fn build_db(cfg: gconf::ConfigDB) -> anyhow::Result<mongodb::Database> {
+use crate::gconf::ConfigDB;
+
+pub async fn build_db(cfg: ConfigDB) -> anyhow::Result<mongodb::Database> {
     Ok(mongodb::Client::with_options(
         ClientOptions::builder()
             .hosts(vec![ServerAddress::Tcp {

@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-gconf = { workspace = true }
 anyhow = {workspace = true}
 async-nats = {workspace = true}
 tracing = {workspace = true}
@@ -18,3 +17,8 @@ tracing-appender = {version = "^0.2.2"}
 jsonwebtoken = "8.1.1"
 pbkdf2 = "0.11.0"
 rand_core = { version = "0.6", features = ["std"] }
+once_cell ={ workspace = true }
+regex = "1.7.0"
+
+[dev-dependencies]
+serde_json = { version = "*"}

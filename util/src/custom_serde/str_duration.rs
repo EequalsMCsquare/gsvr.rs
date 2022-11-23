@@ -1,6 +1,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-use serde::{de::Visitor, Deserializer};
+use serde::{de::Visitor, Deserialize, Deserializer};
+use time::error::ConversionRange;
 
 static DURATION_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new(
@@ -8,6 +9,47 @@ static DURATION_REGEX: Lazy<Regex> = Lazy::new(|| {
     )
     .unwrap()
 });
+
+#[derive(Clone, Copy, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
+pub struct StrDuration(std::time::Duration);
+
+impl<'de> Deserialize<'de> for StrDuration {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_str(V).map(|s| StrDuration(s))
+    }
+}
+
+impl Into<std::time::Duration> for StrDuration {
+    fn into(self) -> std::time::Duration {
+        self.0
+    }
+}
+
+impl TryInto<time::Duration> for StrDuration {
+    type Error = ConversionRange;
+
+    fn try_into(self) -> Result<time::Duration, Self::Error> {
+        self.0.try_into()
+    }
+}
+
+impl From<std::time::Duration> for StrDuration {
+    fn from(dur: std::time::Duration) -> Self {
+        Self(dur)
+    }
+}
+
+impl TryFrom<time::Duration> for StrDuration {
+    type Error = ConversionRange;
+
+    fn try_from(value: time::Duration) -> Result<Self, Self::Error> {
+        Ok(Self(value.try_into()?))
+    }
+}
+
 struct V;
 
 impl<'de> Visitor<'de> for V {
@@ -47,12 +89,6 @@ impl<'de> Visitor<'de> for V {
     }
 }
 
-pub(crate) fn parse_duration<'de, D>(deserilizer: D) -> Result<std::time::Duration, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    deserilizer.deserialize_str(V)
-}
 
 #[cfg(test)]
 mod test {
@@ -63,8 +99,7 @@ mod test {
 
     #[derive(Deserialize, Debug)]
     struct Bar {
-        #[serde(deserialize_with = "super::parse_duration")]
-        dur: std::time::Duration,
+        dur: super::StrDuration,
     }
     #[test]
     fn foo() {
@@ -77,6 +112,6 @@ mod test {
             .add(time::Duration::minutes(30))
             .add(time::Duration::seconds(15))
             .add(time::Duration::milliseconds(20));
-        assert_eq!(expect_dur, bar.dur);
+        assert_eq!(expect_dur.try_into(), Ok(bar.dur));
     }
 }

@@ -9,7 +9,6 @@ edition = "2021"
 gsfw = {workspace = true}
 thiserror = {workspace = true}
 util = { workspace = true }
-gconf = { workspace = true }
 cspb = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true}

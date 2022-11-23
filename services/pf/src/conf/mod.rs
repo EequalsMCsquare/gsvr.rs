@@ -2,7 +2,7 @@ use std::path::Path;
 
 use anyhow::anyhow;
 use config::File;
-use gconf::{ConfigDB, ConfigJwt, ConfigLog, Env};
+use util::gconf::{ConfigDB, ConfigJwt, ConfigLog, Env};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]

@@ -15,7 +15,6 @@ dependencies = [
  "cspb",
  "dialoguer",
  "futures",
- "gconf",
  "gsfw",
  "parking_lot 0.12.1",
  "serde",
@@ -947,7 +946,6 @@ dependencies = [
  "cspb",
  "derivative",
  "futures",
- "gconf",
  "gsfw",
  "hashbrown",
  "mongodb",
@@ -976,7 +974,6 @@ dependencies = [
  "config",
  "cspb",
  "futures",
- "gconf",
  "gsfw",
  "pin-project",
  "serde",
@@ -988,17 +985,6 @@ dependencies = [
  "tower",
  "tracing",
  "util",
-]
-
-[[package]]
-name = "gconf"
-version = "0.1.0"
-dependencies = [
- "once_cell",
- "regex",
- "serde",
- "serde_json",
- "time 0.3.16",
 ]
 
 [[package]]
@@ -1904,7 +1890,6 @@ dependencies = [
  "async-trait",
  "axum",
  "config",
- "gconf",
  "once_cell",
  "serde",
  "serde_json",
@@ -3368,12 +3353,14 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-nats",
- "gconf",
  "jsonwebtoken",
  "mongodb",
+ "once_cell",
  "pbkdf2 0.11.0",
  "rand_core 0.6.4",
+ "regex",
  "serde",
+ "serde_json",
  "time 0.3.16",
  "tracing",
  "tracing-appender",

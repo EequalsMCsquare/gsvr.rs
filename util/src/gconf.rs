@@ -1,6 +1,6 @@
+use crate::custom_serde::StrDuration;
 use serde::Deserialize;
 use std::time::Duration;
-use crate::de_duration;
 #[derive(Deserialize, Debug, Default, Clone)]
 pub struct ConfigLog {
     pub level: Option<String>,
@@ -21,6 +21,7 @@ pub struct ConfigDB {
     pub db_name: Option<String>,
     pub max_conn: Option<u32>,
     pub min_conn: Option<u32>,
+    pub idle_timeout: Option<StrDuration>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -30,22 +31,21 @@ pub struct ConfigMQ {
     pub port: u16,
 
     #[serde(default = "ConfigMQ::default_conn_timeout")]
-    pub conn_timeout: Duration,
+    pub conn_timeout: StrDuration,
     #[serde(default = "ConfigMQ::default_client_capacity")]
     pub client_capacity: usize,
     #[serde(default = "ConfigMQ::default_subscription_capacity")]
     pub subscription_capacity: usize,
-    #[serde(default = "ConfigMQ::default_request_timeout", deserialize_with = "de_duration::parse_duration")]
-    pub request_timeout: Duration,
-    #[serde(default = "ConfigMQ::default_ping_interval", deserialize_with = "de_duration::parse_duration")]
-    pub ping_interval: Duration,
-    #[serde(default = "ConfigMQ::default_flush_interval", deserialize_with = "de_duration::parse_duration")]
-    pub flush_interval: Duration,
+    #[serde(default = "ConfigMQ::default_ping_interval")]
+    pub ping_interval: StrDuration,
+    #[serde(default = "ConfigMQ::default_flush_interval")]
+    pub flush_interval: StrDuration,
+    pub request_timeout: Option<StrDuration>,
 }
 
 impl ConfigMQ {
-    fn default_conn_timeout() -> Duration {
-        Duration::from_secs(5)
+    fn default_conn_timeout() -> StrDuration {
+        Duration::from_secs(5).into()
     }
     fn default_client_capacity() -> usize {
         128
@@ -53,13 +53,10 @@ impl ConfigMQ {
     fn default_subscription_capacity() -> usize {
         1024
     }
-    fn default_request_timeout() -> Duration {
-        Duration::from_secs(10)
-    }
-    fn default_ping_interval() -> Duration {
+    fn default_ping_interval() -> StrDuration {
         time::Duration::minutes(1).try_into().unwrap()
     }
-    fn default_flush_interval() -> Duration {
+    fn default_flush_interval() -> StrDuration {
         time::Duration::milliseconds(100).try_into().unwrap()
     }
 }

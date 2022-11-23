@@ -1,4 +1,4 @@
-use gconf::ConfigJwt;
+use crate::gconf::ConfigJwt;
 pub use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey};
 use jsonwebtoken::{Header, Validation};
 use serde::{de::DeserializeOwned, Serialize};

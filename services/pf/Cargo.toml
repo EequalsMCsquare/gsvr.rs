@@ -13,7 +13,6 @@ tonic = { workspace = true }
 once_cell = { workspace = true }
 util = { workspace = true }
 anyhow = { workspace = true }
-gconf = { workspace = true }
 tracing = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }

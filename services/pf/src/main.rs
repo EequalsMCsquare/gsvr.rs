@@ -11,7 +11,6 @@ mod models;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let c = conf::Config::parse("etc/pf")?;
     util::init_logger(c.log);
-    tracing::debug!("logger init complete");
     let dbconn_str = format!(
         "postres://{user}:{password}@{host}:{port}/{database}",
         user = c.database.user,
@@ -25,6 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db = PgPoolOptions::new()
         .max_connections(c.database.max_conn.unwrap_or(10))
         .min_connections(c.database.min_conn.unwrap_or(1))
+        .idle_timeout(c.database.idle_timeout.map(Into::into))
         .connect(&dbconn_str)
         .await?;
     tracing::info!("database connect success");
@@ -58,6 +58,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 tracing::error!("listen ctrl_c event fail. {}", err)
             }
         });
+    tracing::info!("grpc server listen on: {}", grpc_addr);
     let (http_ret, grpc_ret) = tokio::join! {
         tokio::spawn(http_future),
         tokio::spawn(grpc_future)

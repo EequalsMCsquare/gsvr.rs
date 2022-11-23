@@ -6,7 +6,6 @@ members = [
 	"services/spb",
 	"cspb",
 	"admin",
-	"gconf",
 	"util",
 ]
 
@@ -16,7 +15,6 @@ gsfw = {version = "0.1.1", features = ["util"]}
 async-trait = "0.1.57"
 parking_lot = { version = "0.12", features = ['serde'] }
 util = { path = "./util" }
-gconf = { path = "./gconf" }
 cspb = { path = "./cspb" }
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "^0.7", features = ["codec"] }
