@@ -3,6 +3,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .out_dir("src")
         .build_client(true)
         .build_server(true)
-        .compile(&["proto/gate.proto"], &["proto"])?;
+        .compile(&["proto/auth.proto"], &["proto"])?;
     Ok(())
 }

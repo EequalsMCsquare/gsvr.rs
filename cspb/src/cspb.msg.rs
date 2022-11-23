@@ -15,6 +15,8 @@ pub struct ScFastLogin {
 pub struct CsLogin {
     #[prost(string, tag="1")]
     pub token: ::prost::alloc::string::String,
+    #[prost(int32, tag="2")]
+    pub player_id: i32,
 }
 #[derive(::serde::Serialize, ::serde::Deserialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]

@@ -10,5 +10,7 @@ pub (crate) enum Error {
     #[error("connection close")]
     ReadZero,
     #[error("nats subscribe error")]
-    NatsSub
+    NatsSub,
+    #[error("verify token fail. {0}")]
+    VerToken(tonic::Status)
 }

@@ -7,6 +7,11 @@ host = "192.168.1.4"
 port = 5432
 user = "postgres"
 password = "123aaa"
+# optional config
+max_conn = 10
+min_conn = 3
+# comment idle_timeout for no timeout
+idle_timeout = "1h"
 
 [mq]
 chanbuf = 1024

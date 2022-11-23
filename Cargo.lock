@@ -980,9 +980,11 @@ dependencies = [
  "gsfw",
  "pin-project",
  "serde",
+ "spb",
  "thiserror",
  "tokio",
  "tokio-util",
+ "tonic",
  "tower",
  "tracing",
  "util",
@@ -993,6 +995,7 @@ name = "gconf"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "time 0.3.16",
 ]
 
 [[package]]

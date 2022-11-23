@@ -3,7 +3,8 @@ package cspb.Enum;
 
 enum ErrCode {
     Success = 0;
-    InvalidCredential = 1;
+    Internal = 1;
+    Credential = 2;
 }
 
 enum Gender {

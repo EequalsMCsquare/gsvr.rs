@@ -3,5 +3,5 @@ package spb.Enum;
 
 enum ErrCode {
     Success = 0;
-    Credential = 1;
+    InvToken = 1;
 }

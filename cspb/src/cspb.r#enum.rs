@@ -2,7 +2,8 @@
 #[repr(i32)]
 pub enum ErrCode {
     Success = 0,
-    InvalidCredential = 1,
+    Internal = 1,
+    Credential = 2,
 }
 impl ErrCode {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -12,7 +13,8 @@ impl ErrCode {
     pub fn as_str_name(&self) -> &'static str {
         match self {
             ErrCode::Success => "Success",
-            ErrCode::InvalidCredential => "InvalidCredential",
+            ErrCode::Internal => "Internal",
+            ErrCode::Credential => "Credential",
         }
     }
 }

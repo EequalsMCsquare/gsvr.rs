@@ -1,3 +1,5 @@
+use core::time;
+
 use serde::Deserialize;
 #[derive(Deserialize, Debug, Default, Clone)]
 pub struct ConfigLog {
@@ -12,6 +14,9 @@ pub struct ConfigDB {
     pub host: String,
     pub port: u16,
     pub db_name: Option<String>,
+    pub max_conn: Option<u32>,
+    pub min_conn: Option<u32>,
+    pub idle_timeout: Option<time::Duration>
 }
 
 #[derive(Deserialize, Debug)]

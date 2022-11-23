@@ -1,0 +1,16 @@
+syntax = "proto3";
+import "Enum.proto";
+package spb.auth;
+
+message VerifyTokenReq{
+    string token = 1;
+}
+
+message VerifyTokenAck {
+    Enum.ErrCode err_code = 1;
+    int64 id = 2; // account_id
+}
+
+service AuthService {
+    rpc VerifyToken (VerifyTokenReq) returns (VerifyTokenAck);
+}

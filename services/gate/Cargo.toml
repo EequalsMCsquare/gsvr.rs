@@ -16,10 +16,12 @@ futures = { workspace = true }
 anyhow = { workpsace = true }
 async-nats = { workspace = true }
 tower = { workspace = true }
-serde = { workspace = true}
-pin-project = { workpsace = true}
-config = {workspace = true}
+serde = { workspace = true }
+pin-project = { workpsace = true }
+config = { workspace = true }
 tokio-util = { workspace = true }
-gsfw = {workspace = true}
-async-trait = {workspace = true}
-thiserror = {workspace = true}
+gsfw = { workspace = true }
+async-trait = { workspace = true }
+thiserror = { workspace = true }
+tonic = { workspace = true }
+spb = { path = "../spb" }

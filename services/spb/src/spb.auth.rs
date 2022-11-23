@@ -1,27 +1,26 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GateLoginReq {
+pub struct VerifyTokenReq {
     #[prost(string, tag="1")]
     pub token: ::prost::alloc::string::String,
-    #[prost(int64, tag="2")]
-    pub player_id: i64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GateLoginAck {
+pub struct VerifyTokenAck {
     #[prost(enumeration="super::r#enum::ErrCode", tag="1")]
     pub err_code: i32,
-    #[prost(uint64, tag="2")]
-    pub session: u64,
+    /// account_id
+    #[prost(int64, tag="2")]
+    pub id: i64,
 }
 /// Generated client implementations.
-pub mod gate_service_client {
+pub mod auth_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
     #[derive(Debug, Clone)]
-    pub struct GateServiceClient<T> {
+    pub struct AuthServiceClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl GateServiceClient<tonic::transport::Channel> {
+    impl AuthServiceClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
@@ -32,7 +31,7 @@ pub mod gate_service_client {
             Ok(Self::new(conn))
         }
     }
-    impl<T> GateServiceClient<T>
+    impl<T> AuthServiceClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::Error: Into<StdError>,
@@ -50,7 +49,7 @@ pub mod gate_service_client {
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
-        ) -> GateServiceClient<InterceptedService<T, F>>
+        ) -> AuthServiceClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -64,7 +63,7 @@ pub mod gate_service_client {
                 http::Request<tonic::body::BoxBody>,
             >>::Error: Into<StdError> + Send + Sync,
         {
-            GateServiceClient::new(InterceptedService::new(inner, interceptor))
+            AuthServiceClient::new(InterceptedService::new(inner, interceptor))
         }
         /// Compress requests with the given encoding.
         ///
@@ -81,10 +80,10 @@ pub mod gate_service_client {
             self.inner = self.inner.accept_compressed(encoding);
             self
         }
-        pub async fn gate_login(
+        pub async fn verify_token(
             &mut self,
-            request: impl tonic::IntoRequest<super::GateLoginReq>,
-        ) -> Result<tonic::Response<super::GateLoginAck>, tonic::Status> {
+            request: impl tonic::IntoRequest<super::VerifyTokenReq>,
+        ) -> Result<tonic::Response<super::VerifyTokenAck>, tonic::Status> {
             self.inner
                 .ready()
                 .await
@@ -96,32 +95,32 @@ pub mod gate_service_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/spb.auth.GateService/GateLogin",
+                "/spb.auth.AuthService/VerifyToken",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
 /// Generated server implementations.
-pub mod gate_service_server {
+pub mod auth_service_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    ///Generated trait containing gRPC methods that should be implemented for use with GateServiceServer.
+    ///Generated trait containing gRPC methods that should be implemented for use with AuthServiceServer.
     #[async_trait]
-    pub trait GateService: Send + Sync + 'static {
-        async fn gate_login(
+    pub trait AuthService: Send + Sync + 'static {
+        async fn verify_token(
             &self,
-            request: tonic::Request<super::GateLoginReq>,
-        ) -> Result<tonic::Response<super::GateLoginAck>, tonic::Status>;
+            request: tonic::Request<super::VerifyTokenReq>,
+        ) -> Result<tonic::Response<super::VerifyTokenAck>, tonic::Status>;
     }
     #[derive(Debug)]
-    pub struct GateServiceServer<T: GateService> {
+    pub struct AuthServiceServer<T: AuthService> {
         inner: _Inner<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
     }
     struct _Inner<T>(Arc<T>);
-    impl<T: GateService> GateServiceServer<T> {
+    impl<T: AuthService> AuthServiceServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
@@ -155,9 +154,9 @@ pub mod gate_service_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for GateServiceServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for AuthServiceServer<T>
     where
-        T: GateService,
+        T: AuthService,
         B: Body + Send + 'static,
         B::Error: Into<StdError> + Send + 'static,
     {
@@ -173,22 +172,26 @@ pub mod gate_service_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/spb.auth.GateService/GateLogin" => {
+                "/spb.auth.AuthService/VerifyToken" => {
                     #[allow(non_camel_case_types)]
-                    struct GateLoginSvc<T: GateService>(pub Arc<T>);
-                    impl<T: GateService> tonic::server::UnaryService<super::GateLoginReq>
-                    for GateLoginSvc<T> {
-                        type Response = super::GateLoginAck;
+                    struct VerifyTokenSvc<T: AuthService>(pub Arc<T>);
+                    impl<
+                        T: AuthService,
+                    > tonic::server::UnaryService<super::VerifyTokenReq>
+                    for VerifyTokenSvc<T> {
+                        type Response = super::VerifyTokenAck;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::GateLoginReq>,
+                            request: tonic::Request<super::VerifyTokenReq>,
                         ) -> Self::Future {
                             let inner = self.0.clone();
-                            let fut = async move { (*inner).gate_login(request).await };
+                            let fut = async move {
+                                (*inner).verify_token(request).await
+                            };
                             Box::pin(fut)
                         }
                     }
@@ -197,7 +200,7 @@ pub mod gate_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let inner = inner.0;
-                        let method = GateLoginSvc(inner);
+                        let method = VerifyTokenSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -224,7 +227,7 @@ pub mod gate_service_server {
             }
         }
     }
-    impl<T: GateService> Clone for GateServiceServer<T> {
+    impl<T: AuthService> Clone for AuthServiceServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -234,7 +237,7 @@ pub mod gate_service_server {
             }
         }
     }
-    impl<T: GateService> Clone for _Inner<T> {
+    impl<T: AuthService> Clone for _Inner<T> {
         fn clone(&self) -> Self {
             Self(self.0.clone())
         }
@@ -244,7 +247,7 @@ pub mod gate_service_server {
             write!(f, "{:?}", self.0)
         }
     }
-    impl<T: GateService> tonic::server::NamedService for GateServiceServer<T> {
-        const NAME: &'static str = "spb.auth.GateService";
+    impl<T: AuthService> tonic::server::NamedService for AuthServiceServer<T> {
+        const NAME: &'static str = "spb.auth.AuthService";
     }
 }

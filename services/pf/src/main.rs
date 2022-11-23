@@ -23,7 +23,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::debug!("database connect string: {}", dbconn_str);
     // database
     let db = PgPoolOptions::new()
-        .max_connections(10)
+        .max_connections(c.database.max_conn.unwrap_or(10))
+        .min_connections(c.database.min_conn.unwrap_or(1))
+        .idle_timeout(c.database.idle_timeout)
         .connect(&dbconn_str)
         .await?;
     tracing::info!("database connect success");
@@ -37,9 +39,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(axum::Extension(jwt.clone()))
         .layer(axum::Extension(password.clone()));
     let http_addr = format!("0.0.0.0:{}", c.http_port);
-    let http_graceful = axum::Server::bind(
-        &SocketAddr::from_str(&http_addr)
-            .expect("fail to parse http server address"),
+    let http_future = axum::Server::bind(
+        &SocketAddr::from_str(&http_addr).expect("fail to parse http server address"),
     )
     .serve(app.into_make_service())
     .with_graceful_shutdown(async {
@@ -48,9 +49,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
     tracing::info!("http server listen on: {}", http_addr);
-    // todo: GRPC Server
-
-    // let http_join = tokio::spawn(http_graceful);
-    http_graceful.await?;
+    // GRPC Server
+    let auth_svc = spb::AuthServiceServer::new(grpc::AuthSvc::new(jwt.clone()));
+    let grpc_addr = format!("0.0.0.0:{}", c.grpc_port);
+    let grpc_future = tonic::transport::Server::builder()
+        .add_service(auth_svc)
+        .serve_with_shutdown(grpc_addr.parse()?, async {
+            if let Err(err) = tokio::signal::ctrl_c().await {
+                tracing::error!("listen ctrl_c event fail. {}", err)
+            }
+        });
+    let (http_ret, grpc_ret) = tokio::join! {
+        tokio::spawn(http_future),
+        tokio::spawn(grpc_future)
+    };
+    http_ret??;
+    grpc_ret??;
     Ok(())
 }
