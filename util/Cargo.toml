@@ -9,7 +9,6 @@ edition = "2021"
 anyhow = {workspace = true}
 async-nats = {workspace = true}
 tracing = {workspace = true}
-mongodb = {workspace = true}
 serde = { workspace = true }
 time ={ workspace = true  }
 sqlx = { workspace = true }

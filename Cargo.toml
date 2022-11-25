@@ -34,7 +34,6 @@ strum = { version = "0.24", features = ["derive"] }
 num_enum = { version = "0.5.7" }
 slice-deque = "0.3.0"
 thiserror = "1.0"
-mongodb = { version = "2.3", features = ["tokio-runtime", "bson-serde_with"] }
 time = "0.3.16"
 derivative = "2.2.0"
 sqlx = { version = "0.6.2", features = ["runtime-tokio-rustls", "postgres", "time", "json", "offline", "macros"] }
