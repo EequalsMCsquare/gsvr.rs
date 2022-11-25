@@ -5,7 +5,7 @@ use time::error::ConversionRange;
 
 static DURATION_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new(
-        r#"((?P<day>\d+)d)?((?P<hour>\d+)h)?((?P<min>\d+)m)?((?P<sec>\d+)s)?((?P<ms>\d+)ms)?"#,
+        r#"((?P<day>\d+)d)?((?P<hour>\d+)h)?((?P<min>\d+)m)?((?P<sec>\d+)s)?((?P<ms>\d+)ms)?$"#,
     )
     .unwrap()
 });
@@ -89,7 +89,6 @@ impl<'de> Visitor<'de> for V {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use std::ops::Add;
@@ -102,7 +101,7 @@ mod test {
         dur: super::StrDuration,
     }
     #[test]
-    fn foo() {
+    fn parse_str_duration_1() {
         let text = json!({
             "dur": "1h30m15s20ms"
         });
@@ -112,6 +111,70 @@ mod test {
             .add(time::Duration::minutes(30))
             .add(time::Duration::seconds(15))
             .add(time::Duration::milliseconds(20));
+        assert_eq!(expect_dur.try_into(), Ok(bar.dur));
+    }
+
+    #[test]
+    fn parse_str_duration_2() {
+        let text = json!({
+            "dur": "1d25h61m61s1001ms"
+        });
+        let bar: Bar = serde_json::from_value(text).unwrap();
+        let expect_dur = time::Duration::default()
+            .add(time::Duration::days(1))
+            .add(time::Duration::hours(25))
+            .add(time::Duration::minutes(61))
+            .add(time::Duration::seconds(61))
+            .add(time::Duration::milliseconds(1001));
+        assert_eq!(expect_dur.try_into(), Ok(bar.dur));
+    }
+
+    #[test]
+    fn parse_str_duration_3() {
+        let text = json!({
+            "dur": "11d"
+        });
+        let bar: Bar = serde_json::from_value(text).unwrap();
+        let expect_dur = time::Duration::days(11);
+        assert_eq!(expect_dur.try_into(), Ok(bar.dur));
+    }
+
+    #[test]
+    fn parse_str_duration_4() {
+        let text = json!({
+            "dur": "23h"
+        });
+        let bar: Bar = serde_json::from_value(text).unwrap();
+        let expect_dur = time::Duration::hours(23);
+        assert_eq!(expect_dur.try_into(), Ok(bar.dur));
+    }
+    #[test]
+    fn parse_str_duration_5() {
+        let text = json!({
+            "dur": "59m"
+        });
+        let bar: Bar = serde_json::from_value(text).unwrap();
+        let expect_dur = time::Duration::minutes(59);
+        assert_eq!(expect_dur.try_into(), Ok(bar.dur));
+    }
+
+    #[test]
+    fn parse_str_duration_6() {
+        let text = json!({
+            "dur": "59s"
+        });
+        let bar: Bar = serde_json::from_value(text).unwrap();
+        let expect_dur = time::Duration::seconds(59);
+        assert_eq!(expect_dur.try_into(), Ok(bar.dur));
+    }
+
+    #[test]
+    fn parse_str_duration_7() {
+        let text = json!({
+            "dur": "999ms"
+        });
+        let bar: Bar = serde_json::from_value(text).unwrap();
+        let expect_dur = time::Duration::milliseconds(999);
         assert_eq!(expect_dur.try_into(), Ok(bar.dur));
     }
 }
