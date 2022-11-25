@@ -1,8 +1,8 @@
 #[derive(::serde::Serialize, ::serde::Deserialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsFastLogin {
-    #[prost(uint64, tag="1")]
-    pub player_id: u64,
+    #[prost(int64, tag="1")]
+    pub player_id: i64,
 }
 #[derive(::serde::Serialize, ::serde::Deserialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -15,8 +15,8 @@ pub struct ScFastLogin {
 pub struct CsLogin {
     #[prost(string, tag="1")]
     pub token: ::prost::alloc::string::String,
-    #[prost(int32, tag="2")]
-    pub player_id: i32,
+    #[prost(int64, tag="2")]
+    pub player_id: i64,
 }
 #[derive(::serde::Serialize, ::serde::Deserialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]

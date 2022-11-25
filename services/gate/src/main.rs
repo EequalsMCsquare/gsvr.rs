@@ -15,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
 
     let nats = util::nats::build(c.mq).await?;
     debug!("NATS connected");
-    let auth = spb::AuthServiceClient::connect("localhost:8101").await?;
+    let auth = spb::AuthServiceClient::connect("http://localhost:8101").await?;
     debug!("AUTH_SVC connected");
     let adaptor_builder = adaptor::NatsAdaptorBuilder {
         env: c.env.into(),

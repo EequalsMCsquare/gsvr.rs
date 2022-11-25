@@ -28,7 +28,7 @@ client_capacity = 128
 subscription_capacity = 1024
 request_timeout = "10s"
 ping_interval = "60s"
-flush_interval = "100ms"
+flush_interval = "50ms"
 
 [jwt]
 algorithm = "RS256"

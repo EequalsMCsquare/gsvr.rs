@@ -41,7 +41,7 @@ pub struct ReqCreatePlayer {
 
 #[derive(Debug, Serialize)]
 pub struct AckCreatePlayer {
-    player_id: i32,
+    player_id: i64,
 }
 
 pub async fn create_player(

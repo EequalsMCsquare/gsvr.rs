@@ -39,7 +39,7 @@ impl AdaptorBuilder for NatsAdaptorBuilder {
 }
 
 pub struct NatsAdaptor {
-    player_id: u64,
+    player_id: i64,
     cstopic: String,
     nats: async_nats::Client,
     sub: async_nats::Subscriber,
@@ -81,6 +81,16 @@ impl Adaptor for NatsAdaptor {
                                     })),
                                 };
                                 sink.send(reply.encode_to_vec().into()).await?;
+                                self.player_id = msg.player_id;
+                                self.sub = match self
+                                    .nats
+                                    .subscribe(format!("scp.{}", self.player_id))
+                                    .await
+                                {
+                                    Ok(sub) => sub,
+                                    Err(err) => return Err(err),
+                                };
+                                self.cstopic = format!("csp.{}", self.player_id);
                                 Ok((stream, sink))
                             }
                             Err(err) => {

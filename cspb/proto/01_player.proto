@@ -3,14 +3,14 @@ import "Enum.proto";
 package cspb.msg;
 
 message CsFastLogin {
-    uint64 player_id = 1;
+    int64 player_id = 1;
 }
 message ScFastLogin {
     Enum.ErrCode errCode = 1;
 }
 message CsLogin {
     string token = 1;
-    int32 player_id = 2;
+    int64 player_id = 2;
 }
 message ScLogin {
     Enum.ErrCode errCode = 1;

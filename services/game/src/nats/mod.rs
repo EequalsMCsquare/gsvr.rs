@@ -34,7 +34,7 @@ impl component::Component<ChanProto, ModuleName, Error> for NatsComponent {
                         msg.payload = Some(message.clone());
                         if let Err(err) = self
                             .nats
-                            .publish(format!("scpmsg.{}", player_id), msg.encode_to_vec().into())
+                            .publish(format!("scp.{}", player_id), msg.encode_to_vec().into())
                             .await
                         {
                             tracing::error!("fail to publish scpmsg.*. {}", err);

@@ -24,14 +24,14 @@ CREATE TABLE IF NOT EXISTS public.accounts
 -- each account holds N players
 CREATE TABLE IF NOT EXISTS public.players
 (
+    id bigserial NOT NULL,
     "accountId" bigserial NOT NULL,
-    id integer NOT NULL,
     name character varying(16) NOT NULL,
     "createdAt" timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
     "updatedAt" timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
     "deletedAt" timestamp without time zone,
     "lastLogin" timestamp without time zone,
-    CONSTRAINT players_pk PRIMARY KEY ("accountId", id),
+    CONSTRAINT players_id_pk PRIMARY KEY (id),
     CONSTRAINT players_account_name_key UNIQUE (name, "accountId")
 );
 

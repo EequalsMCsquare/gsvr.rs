@@ -1,2 +1,2 @@
 [database]
-db_name = "GAME_${ENV}_${SID}"
+db_name = "game"

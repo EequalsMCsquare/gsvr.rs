@@ -1,4 +1,6 @@
-pub mod console_adaptor;
+pub mod adaptor;
+pub mod gclient;
+pub mod nclient;
 pub mod codec;
-pub mod client;
-use client::{ClientInfo, ClientCsMsg, ClientScMsg};
+pub mod pfclient;
+pub mod misc;
