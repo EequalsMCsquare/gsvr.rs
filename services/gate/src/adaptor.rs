@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use async_trait::async_trait;
 use bytes::Bytes;
 use cspb::Message;
@@ -138,11 +137,6 @@ impl Adaptor for NatsAdaptor {
     ) -> Result<(), Box<dyn std::error::Error>> {
         match msg {
             Ok(msg) => {
-                if self.player_id == 0 {
-                    // todo!
-
-                    return Ok(());
-                }
                 if let Err(err) = self.nats.publish(self.cstopic.clone(), msg).await {
                     return Err(Box::new(err));
                 }
@@ -154,9 +148,9 @@ impl Adaptor for NatsAdaptor {
 
     // recv sc from nats
     async fn recv(&mut self) -> Result<Option<Self::RecvItem>, Box<dyn std::error::Error + Send>> {
-        match self.sub.next().await {
-            Some(msg) => Ok(Some(msg.payload)),
-            None => Err(anyhow!("channel close").into()),
+        match tokio::time::timeout(std::time::Duration::from_secs(60 * 3), self.sub.next()).await {
+            Ok(ret) => Ok(ret.map(|m| m.payload)),
+            Err(_) => Ok(None),
         }
     }
 }

@@ -20,11 +20,10 @@ util = { workspace = true }
 tokio = { workspace = true }
 bytes = { workspace = true }
 tokio-util = { workspace = true }
-anyhow = { worksapce = true }
+anyhow = { version = "1" }
 futures = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
-slice-deque = { workspace = true }
 gsfw = { workspace = true }
 async-trait = { workspace = true }
 strum = {workspace = true }

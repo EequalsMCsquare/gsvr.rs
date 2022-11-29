@@ -16,7 +16,7 @@ pub enum SubCmds {
         port: u16,
     },
     FClient {
-        #[arg(short, long = "playerid")]
+        #[arg(short, long = "pid")]
         player_id: i64,
     },
     Client {
@@ -25,6 +25,11 @@ pub enum SubCmds {
         #[arg(short, long)]
         password: String,
     },
-    Bench,
+    Bench {
+        #[arg(short, long)]
+        client: usize,
+        #[arg(short, long)]
+        sec: usize,
+    },
     GM,
 }

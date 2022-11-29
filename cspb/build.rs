@@ -8,6 +8,10 @@ fn main() -> Result<()> {
             "#[derive(::serde::Serialize, ::serde::Deserialize)]",
         )
         .type_attribute(
+            "cspb.Enum.Gender",
+            "#[derive(::serde::Serialize, ::serde::Deserialize)]",
+        )
+        .type_attribute(
             ".cspb.registry.CsProto",
             "#[derive(::serde::Serialize, ::serde::Deserialize)]",
         )

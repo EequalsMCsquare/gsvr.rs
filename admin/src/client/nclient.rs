@@ -62,6 +62,9 @@ impl NClient {
     }
 
     pub async fn use_player(&mut self, id: i64) -> anyhow::Result<()> {
+        if self.token.is_none() {
+            self.authorize().await?;
+        }
         let players = self
             .pfclient
             .list_players(&self.token.as_ref().unwrap())

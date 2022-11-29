@@ -12,11 +12,10 @@ tokio = { workspace = true }
 bytes = { workspace = true }
 tracing = { workspace = true }
 futures = { workspace = true }
-anyhow = { workpsace = true }
+anyhow = { version = "1" }
 async-nats = { workspace = true }
 tower = { workspace = true }
 serde = { workspace = true }
-pin-project = { workpsace = true }
 config = { workspace = true }
 tokio-util = { workspace = true }
 gsfw = { workspace = true }
