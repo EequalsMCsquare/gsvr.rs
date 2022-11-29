@@ -1,46 +1,56 @@
 mod builder;
-mod handler;
-mod item;
-mod item_mgr;
 mod player;
-mod player_mgr;
+mod playermgr;
+mod proto;
+mod worker;
+use self::{
+    player::{DBplayer, Player},
+    playermgr::PlayerLoader,
+    proto::WProto,
+};
 use crate::{
-    error::Error,
-    hub::{ChanCtx, ChanProto, Hub, ModuleName},
+    hub::{ChanCtx, GProto, Hub, ModuleName, PCS, PSC},
+    nats::MQProtoReq,
 };
 use anyhow::{anyhow, bail};
+use async_trait::async_trait;
 pub use builder::Builder;
-use gsfw::{
-    chanrpc::broker::{AsyncBroker, Broker},
-    component,
-};
 use cspb::Message;
-use player_mgr::PlayerMgr;
-use std::{cell::RefCell, error::Error as StdError};
+use gsfw::{chanrpc::broker::Broker, component};
+use hashbrown::HashSet;
+pub use proto::{PLProtoAck, PLProtoReq};
+use std::{error::Error as StdError, sync::Arc};
 use tokio::sync::mpsc;
+use tracing::info;
 
 pub struct PlayComponent {
-    players: RefCell<PlayerMgr>,
+    workers: Vec<(
+        worker::Worker,
+        crossbeam_channel::Sender<WProto>,
+        crossbeam_channel::Receiver<Box<PSC>>,
+    )>,
     rx: mpsc::Receiver<ChanCtx>,
     broker: Hub,
+
+    _pset: HashSet<i64>,
 }
 
-#[async_trait::async_trait]
-impl component::Component<ChanProto, ModuleName, Error> for PlayComponent {
+#[async_trait]
+impl component::Component<Hub> for PlayComponent {
     fn name(&self) -> ModuleName {
         ModuleName::Play
     }
 
-    async fn run(mut self: Box<Self>) -> Result<(), Error> {
-        std::thread::spawn(move || self._run())
-            .join()
-            .map_err(|err| anyhow!("JoinError: {:?}", err))
-            .unwrap()
-            .unwrap();
-        Ok(())
+    async fn run(mut self: Box<Self>) -> Result<(), Box<dyn StdError + Send>> {
+        if self.workers.len() == 1 {
+            self._single_worker_run().await
+        } else {
+            self._multi_worker_run().await
+        }
+        .map_err(Into::into)
     }
 
-    async fn init(&mut self) -> Result<(), Error> {
+    async fn init(&mut self) -> Result<(), Box<dyn StdError + Send>> {
         // register player message to mpsc::Receiver
         self.init_sub_pmsg().await.unwrap();
         Ok(())
@@ -48,36 +58,89 @@ impl component::Component<ChanProto, ModuleName, Error> for PlayComponent {
 }
 
 impl PlayComponent {
-    fn _run(&mut self) -> anyhow::Result<()> {
-        loop {
-            if let Some(req) = self.rx.blocking_recv() {
-                match req.payload {
-                    ChanProto::CsPMsgNtf { player_id, message } => {
-                        tracing::debug!("recv player-{}: {:?}", player_id, message);
-                        self.handle_pmsg(player_id, message);
+    async fn _single_worker_run(&mut self) -> anyhow::Result<()> {
+        let (mut worker, wtx, prx) = self.workers.remove(0);
+        let (close_tx, close_rx) = crossbeam_channel::bounded::<()>(1);
+        // spawn running worker in a new thread
+        let close_rx1 = close_rx.clone();
+        let worker_handle = std::thread::spawn(move || worker.run(close_rx1));
+        let psc_casttx = self.broker.cast_tx(ModuleName::Nats);
+        // spawn thread to proxy PSC to nats
+        let close_rx1 = close_rx.clone();
+        let psc_handle = std::thread::spawn(move || loop {
+            crossbeam_channel::select! {
+                recv(prx) -> msg => match msg {
+                    Ok(psc) => psc_casttx.blocking_cast(GProto::PSC(psc)),
+                    Err(err) => {
+                        tracing::error!("[PSC thread]. {}", err);
+                        break;
                     }
-                    ChanProto::CtrlShutdown => {
-                        tracing::info!("[{:?}]recv shutdown", ModuleName::Play);
-                        return Ok(());
+                },
+                recv(close_rx1) -> _ => return
+            }
+        });
+        let (pltx, plrx) = crossbeam_channel::bounded::<Box<PCS>>(1024);
+        let pload = PlayerLoader::new(
+            Arc::new(self.broker.call_tx(ModuleName::DB)),
+            Arc::new(self.broker.call_tx(ModuleName::Play)),
+            Arc::new(self.broker.cast_tx(ModuleName::Play)),
+            plrx,
+            close_rx.clone()
+        );
+        let pload_handle = std::thread::spawn(move || pload.run());
+
+        // handle message
+        while let Some(req) = self.rx.recv().await {
+            match req.payload() {
+                GProto::PCS(msg) => {
+                    // check player loaded
+                    if self._pset.contains(&msg.player_id) {
+                        wtx.send(WProto::PCS(msg))?;
+                    } else {
+                        // send pcs to PlayerLoader
+                        pltx.send(msg)?;
                     }
-                    _um => tracing::error!("[play] receive unhandled ChanProto: {:?}", _um),
                 }
-            } else {
-                return Err(anyhow!("[play] no ProtoSender left"));
+                GProto::PLProtoReq(inner) => match inner {
+                    PLProtoReq::AddPlayer(player) => {
+                        tracing::debug!("add player to worker[0]");
+                        self._pset.insert(player.pid);
+                        // self.send_player_to_worker(player, 0);
+                        wtx.send(WProto::AddPlayer(player)).unwrap();
+                        req.ok(GProto::Ok);
+                    }
+                },
+                GProto::CtrlShutdown => {
+                    info!("[play] recv shutdown");
+                    close_tx.send(()).unwrap();
+                    worker_handle.join().expect("worker thread join fail.")?;
+                    pload_handle.join().expect("pload thread join fail")?;
+                    psc_handle.join().expect("psc thread join fail.");
+                    return Ok(());
+                }
+                _unexpected => tracing::error!(
+                    "[play] recv unpexted ChanProto: {}",
+                    Into::<&'static str>::into(_unexpected)
+                ),
             }
         }
+        Err(anyhow!("[play] no ProtoSender left"))
+    }
+
+    async fn _multi_worker_run(&mut self) -> anyhow::Result<()> {
+        todo!()
     }
 
     async fn init_sub_pmsg(
         &mut self,
     ) -> std::result::Result<(), Box<(dyn StdError + std::marker::Send + 'static)>> {
-        if let Err(err) = AsyncBroker::call(
+        if let Err(err) = Broker::call(
             &self.broker,
             ModuleName::Nats,
-            ChanProto::Sub2HubReq {
+            GProto::MQProtoReq(MQProtoReq::Sub2HubReq {
                 topic: "csp.*".to_string(),
                 decode_fn: Self::pmsg_decode_fn,
-            },
+            }),
         )
         .await
         {
@@ -86,20 +149,7 @@ impl PlayComponent {
         Ok(())
     }
 
-    fn sendp(&self, player_id: u64, msg: cspb::ScMsg) {
-        tracing::debug!("send player-{} {:?}", player_id, msg);
-        // TODO
-        Broker::blocking_cast(
-            &self.broker,
-            ModuleName::Nats,
-            ChanProto::ScPMsgNtf {
-                player_id,
-                message: msg,
-            },
-        )
-    }
-
-    fn pmsg_decode_fn(msg: async_nats::Message) -> anyhow::Result<ChanProto> {
+    fn pmsg_decode_fn(msg: async_nats::Message) -> anyhow::Result<GProto> {
         if let Some(strpid) = msg.subject.split('.').skip(1).last() {
             if let Ok(num) = strpid.parse() {
                 let proto = match cspb::CsProto::decode(msg.payload) {
@@ -107,10 +157,10 @@ impl PlayComponent {
                     Err(err) => return Err(anyhow!("{:?}", err)),
                 };
                 if let Some(payload) = proto.payload {
-                    return Ok(ChanProto::CsPMsgNtf {
+                    return Ok(GProto::PCS(Box::new(PCS {
                         player_id: num,
                         message: payload,
-                    });
+                    })));
                 } else {
                     bail!("no payload")
                 }

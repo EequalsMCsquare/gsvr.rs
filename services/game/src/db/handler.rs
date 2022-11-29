@@ -1,5 +1,2 @@
 use super::DBComponent;
-
-impl DBComponent {
-
-}
+impl DBComponent {}

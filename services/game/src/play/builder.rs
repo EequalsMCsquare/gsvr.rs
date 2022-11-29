@@ -1,26 +1,31 @@
-use super::{player_mgr::PlayerMgr, PlayComponent};
-use crate::{
-    error::Error,
-    hub::{ChanCtx, ChanProto, Hub, ModuleName},
-};
+use super::{worker::Worker, PlayComponent};
+use crate::hub::{ChanCtx, Hub, ModuleName};
 use gsfw::component;
-use std::cell::RefCell;
 use tokio::sync::mpsc;
 
 pub struct Builder {
     name: ModuleName,
     rx: Option<mpsc::Receiver<ChanCtx>>,
     brkr: Option<Hub>,
+    worker_num: usize,
 }
 
-impl component::ComponentBuilder<ChanProto, ModuleName, Hub, Error, mpsc::Receiver<ChanCtx>>
-    for Builder
-{
-    fn build(self: Box<Self>) -> Box<dyn component::Component<ChanProto, ModuleName, Error>> {
+impl component::ComponentBuilder<Hub> for Builder {
+    fn build(self: Box<Self>) -> Box<dyn component::Component<Hub>> {
         Box::new(PlayComponent {
-            players: RefCell::new(PlayerMgr::new()),
             rx: self.rx.unwrap(),
             broker: self.brkr.unwrap(),
+            _pset: Default::default(),
+            workers: vec![
+                (
+                    crossbeam_channel::bounded(4096),
+                    crossbeam_channel::bounded(4096)
+                );
+                self.worker_num
+            ]
+            .into_iter()
+            .map(|((wtx, wrx), (ptx, prx))| (Worker::new(wrx, ptx), wtx, prx))
+            .collect(),
         })
     }
 
@@ -41,6 +46,12 @@ impl Builder {
             name: ModuleName::Play,
             rx: None,
             brkr: None,
+            worker_num: 4,
         }
+    }
+
+    pub fn worker_num(mut self, num: usize) -> Self {
+        self.worker_num = num;
+        self
     }
 }

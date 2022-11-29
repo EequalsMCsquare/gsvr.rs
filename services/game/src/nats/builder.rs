@@ -1,6 +1,5 @@
 use crate::{
-    error::Error,
-    hub::{ChanCtx, ChanProto, Hub, ModuleName},
+    hub::{ChanCtx, Hub, ModuleName},
 };
 use gsfw::component;
 use tokio::sync::mpsc;
@@ -19,10 +18,10 @@ impl Builder {
     }
 }
 
-impl component::ComponentBuilder<ChanProto, ModuleName, Hub, Error, mpsc::Receiver<ChanCtx>>
+impl component::ComponentBuilder<Hub>
     for Builder
 {
-    fn build(self: Box<Self>) -> Box<dyn component::Component<ChanProto, ModuleName, Error>> {
+    fn build(self: Box<Self>) -> Box<dyn component::Component<Hub>> {
         Box::new(super::NatsComponent {
             nats: self.nats.unwrap(),
             hub: self.brkr.unwrap(),

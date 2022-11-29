@@ -13,8 +13,8 @@ pub enum Error {
         "item is at max capacity. {cap_needed} empty spots are required but only {remain} left"
     )]
     ItemMax { cap_needed: u64, remain: u64 },
-    #[error("no such record found in database. collection: {coll}")]
-    NoDBRecord { coll: String },
+    #[error("no such record found in database.")]
+    NoDBRecord,
     #[error(transparent)]
     ChanRecv(#[from] oneshot::error::RecvError),
     #[error("send error: {0}")]

@@ -22,9 +22,11 @@ config = { workspace = true }
 hashbrown = { workspace = true }
 async-trait = { workspace = true }
 time = { workspace = true }
-slice-deque = { workspace = true }
 parking_lot = { workspace = true }
 pin-project = { workspace = true }
-derivative = { workspace = true }
 strum = { workspace = true }
 sqlx = { workspace = true }
+crossbeam-channel = "0.5.6"
+crossbeam-queue = "0.3.8"
+dashmap = "5.4.0"
+fxhash = "0.2.1"

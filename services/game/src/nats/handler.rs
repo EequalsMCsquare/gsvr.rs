@@ -1,7 +1,7 @@
 use futures::StreamExt;
-use gsfw::chanrpc::broker::AsyncBroker;
+use gsfw::chanrpc::broker::Broker;
 
-use crate::{hub::{ChanProto, ModuleName}, error::{Result, Error}};
+use crate::{hub::{GProto, ModuleName}, error::{Result, Error}};
 
 use super::NatsComponent;
 
@@ -11,8 +11,9 @@ impl NatsComponent {
         &self,
         from: ModuleName,
         topic: String,
-        decode_fn: fn(async_nats::Message) -> anyhow::Result<ChanProto>,
+        decode_fn: fn(async_nats::Message) -> anyhow::Result<GProto>,
     ) -> Result<()> {
+        tracing::debug!("{:?} subscribe to {}", from , topic);
         match self.nats.subscribe(topic).await {
             Ok(mut sub) => {
                 let func = decode_fn;
@@ -27,7 +28,7 @@ impl NatsComponent {
                                 continue;
                             }
                         };
-                        AsyncBroker::cast(&hub, sender, proto).await;
+                        Broker::cast(&hub, sender, proto).await;
                     }
                 });
             }

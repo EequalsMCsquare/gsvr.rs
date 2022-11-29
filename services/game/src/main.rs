@@ -4,7 +4,7 @@ mod error;
 mod hub;
 mod nats;
 mod play;
-mod timer;
+use error::Error;
 use gsfw::gs;
 
 fn main() -> anyhow::Result<()> {
@@ -26,9 +26,8 @@ fn main() -> anyhow::Result<()> {
             .expect("fail to build PgPool");
         gs::GameBuilder::new()
             .component(db::Builder::new().with_db(db))
-            .component(timer::Builder::new())
             .component(nats::Builder::new().with_nats(nats_client))
-            .component(play::Builder::new())
+            .component(play::Builder::new().worker_num(1))
             .serve()?
             .await;
         Ok(())
