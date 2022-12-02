@@ -1,4 +1,4 @@
-use crate::client::{gclient::GClient, misc::AdminClient, nclient::NClient};
+use crate::client::{gclient::GClient, nclient::NClient};
 use anyhow::bail;
 use fst::{Automaton, IntoStreamer};
 use once_cell::sync::Lazy;
@@ -8,6 +8,7 @@ use strum::{IntoEnumIterator, VariantNames};
 
 // execute fast login client
 pub async fn run_game_client(mut client: GClient, prompt: String) -> anyhow::Result<()> {
+    client.authenticate().await?;
     loop {
         let input = requestty::prompt_one(
             requestty::Question::input("cmd")
@@ -227,10 +228,7 @@ admin client:
     logout: disconnect from gate
 "#;
 
-    pub async fn handle<C>(&self, client: &mut C) -> anyhow::Result<()>
-    where
-        C: AdminClient,
-    {
+    pub async fn handle(&self, client: &mut GClient) -> anyhow::Result<()> {
         match self {
             GameCmd::Help => {
                 print!("{}", Self::HELP_MSG);

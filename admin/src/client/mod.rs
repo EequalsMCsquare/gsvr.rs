@@ -1,4 +1,3 @@
-pub mod adaptor;
 pub mod gclient;
 pub mod nclient;
 pub mod codec;

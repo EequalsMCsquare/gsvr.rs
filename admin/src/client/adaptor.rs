@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use anyhow::anyhow;
 use async_trait::async_trait;
 use futures::{SinkExt, StreamExt};
@@ -16,13 +18,13 @@ pub struct ClientAdaptor {
 #[derive(Clone)]
 pub struct ClientAdaptorBuilder {
     info: ClientInfo,
-    req_tx: broadcast::Sender<cspb::CsMsg>,
+    req_tx: Arc<broadcast::Sender<cspb::CsMsg>>,
     ack_tx: mpsc::Sender<cspb::ScMsg>,
 }
 
 impl ClientAdaptorBuilder {
     pub fn new(
-        req_tx: broadcast::Sender<cspb::CsMsg>,
+        req_tx: Arc<broadcast::Sender<cspb::CsMsg>>,
         ack_tx: mpsc::Sender<cspb::ScMsg>,
         info: ClientInfo,
     ) -> Self {
@@ -55,8 +57,8 @@ impl network::Adaptor for ClientAdaptor {
 
     async fn ready<R, W>(
         &mut self,
-        mut stream: FramedRead<R, Self::Dec>,
-        mut sink: FramedWrite<W, Self::Enc>,
+        mut fr: FramedRead<R, Self::Dec>,
+        mut fw: FramedWrite<W, Self::Enc>,
     ) -> Result<(FramedRead<R, Self::Dec>, FramedWrite<W, Self::Enc>), Box<dyn std::error::Error>>
     where
         R: AsyncRead + Send + Unpin,

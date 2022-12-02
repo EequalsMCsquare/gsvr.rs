@@ -29,7 +29,7 @@ pub enum SubCmds {
         #[arg(short, long)]
         client: usize,
         #[arg(short, long)]
-        sec: usize,
+        iter: usize,
     },
     GM,
 }

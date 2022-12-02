@@ -1,51 +1,117 @@
-use super::{
-    adaptor::ClientAdaptorBuilder,
-    codec,
-    misc::{AdminClient, ClientInfo},
+use super::{codec, misc::ClientInfo};
+use anyhow::bail;
+use futures::{SinkExt, StreamExt};
+use tokio::{
+    io::{ReadHalf, WriteHalf},
+    net::{TcpStream, ToSocketAddrs},
 };
-use anyhow::anyhow;
-use async_trait::async_trait;
-use gsfw::network;
-use tokio::sync::{broadcast, mpsc};
-use tower::Service;
+use tokio_util::codec::{FramedRead, FramedWrite};
 
-pub struct GClient {
-    tx: broadcast::Sender<cspb::CsMsg>,
-    rx: mpsc::Receiver<cspb::ScMsg>,
-    // agent_future: Pin<Box<dyn Future<Output = Result<(), gsfw::error::Error>> + 'static + Send>>,
-    _info: ClientInfo,
-    _agent_join: tokio::task::JoinHandle<Result<(), gsfw::error::Error>>,
+pub struct GClientBuilder<A> {
+    gate: Option<A>,
+    info: Option<ClientInfo>,
 }
 
-impl GClient {
-    pub fn new(gate: String, info: ClientInfo) -> anyhow::Result<Self> {
-        let stream = std::net::TcpStream::connect(gate)?;
-        let stream = tokio::net::TcpStream::from_std(stream)?;
-        let (req_tx, _req_rx) = broadcast::channel(128);
-        let (ack_tx, ack_rx) = mpsc::channel(128);
-        let mut make_agent = network::AgentService::new(
-            codec::Encoder,
-            codec::Decoder::default(),
-            ClientAdaptorBuilder::new(req_tx.clone(), ack_tx, info.clone()),
-        );
-        let agent_future = make_agent.call(stream);
-        Ok(Self {
-            _info: info,
-            tx: req_tx,
-            rx: ack_rx,
-            _agent_join: tokio::spawn(agent_future),
+impl<A> GClientBuilder<A>
+where
+    A: ToSocketAddrs,
+{
+    pub fn new() -> Self {
+        Self {
+            gate: None,
+            info: None,
+        }
+    }
+
+    pub fn gate(mut self, addr: A) -> Self {
+        self.gate = Some(addr);
+        self
+    }
+
+    pub fn info(mut self, info: ClientInfo) -> Self {
+        self.info = Some(info);
+        self
+    }
+
+    pub async fn build(self) -> anyhow::Result<GClient> {
+        let stream = TcpStream::connect(self.gate.unwrap()).await?;
+        let (rd, wr) = tokio::io::split(stream);
+        let fr = FramedRead::with_capacity(rd, codec::Decoder::default(), 1024);
+        let fw = FramedWrite::new(wr, codec::Encoder);
+        Ok(GClient {
+            rd: fr,
+            wr: fw,
+            _info: self.info.unwrap(),
         })
     }
 }
 
-#[async_trait]
-impl AdminClient for GClient {
-    async fn send(&mut self, msg: cspb::CsMsg) -> anyhow::Result<()> {
-        self.tx.send(msg)?;
+pub struct GClient {
+    rd: FramedRead<ReadHalf<TcpStream>, codec::Decoder>,
+    wr: FramedWrite<WriteHalf<TcpStream>, codec::Encoder>,
+    _info: ClientInfo,
+}
+
+impl GClient {
+    async fn auth_fast_login(&mut self) -> anyhow::Result<()> {
+        if let ClientInfo::FastLogin { player_id } = self._info {
+            let msg = cspb::CsMsg::CsFastLogin(cspb::CsFastLogin { player_id });
+            self.wr.send(msg).await?;
+            if let Some(Ok(cspb::ScMsg::ScFastLogin(ack))) = self.rd.next().await {
+                if ack.err_code() == cspb::ErrCode::Success {
+                    Ok(())
+                } else {
+                    bail!("fail to auth. {:?}", ack.err_code())
+                }
+            } else {
+                bail!("recv invalid reply")
+            }
+        } else {
+            panic!()
+        }
+    }
+
+    async fn auth_normal(&mut self) -> anyhow::Result<()> {
+        if let ClientInfo::Normal { player_id, token } = &self._info {
+            let msg = cspb::CsMsg::CsLogin(cspb::CsLogin {
+                token: token.clone(),
+                player_id: *player_id,
+            });
+            self.wr.send(msg).await?;
+            if let Some(Ok(cspb::ScMsg::ScLogin(ack))) = self.rd.next().await {
+                if ack.err_code() == cspb::ErrCode::Success {
+                    Ok(())
+                } else {
+                    bail!("fail to auth. {:?}", ack.err_code())
+                }
+            } else {
+                bail!("recv invalid reply")
+            }
+        } else {
+            panic!()
+        }
+    }
+
+    pub async fn authenticate(&mut self) -> anyhow::Result<()> {
+        match &self._info {
+            ClientInfo::Normal {
+                token: _,
+                player_id: _,
+            } => self.auth_normal().await,
+            ClientInfo::FastLogin { player_id: _ } => self.auth_fast_login().await,
+        }
+    }
+
+    pub async fn send(&mut self, msg: cspb::CsMsg) -> anyhow::Result<()> {
+        self.wr.send(msg).await?;
         Ok(())
     }
 
-    async fn recv(&mut self) -> anyhow::Result<cspb::ScMsg> {
-        self.rx.recv().await.ok_or(anyhow!("recv None"))
+    pub async fn recv(&mut self) -> anyhow::Result<cspb::ScMsg> {
+        if let Some(msg) = self.rd.next().await {
+            msg
+        } else {
+            bail!("recv none from FramedRead")
+        }
     }
 }

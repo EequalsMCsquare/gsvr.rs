@@ -1,7 +1,7 @@
 use crate::cmd::client::run_game_client;
 
 use super::{
-    gclient::GClient,
+    gclient::{GClient, GClientBuilder},
     misc::{ClientInfo, Player},
     pfclient::PfClient,
 };
@@ -71,14 +71,14 @@ impl NClient {
             .await?;
         match players.into_iter().find(|p| p.id == id) {
             Some(player) => {
-                // gate login
-                let gclient = GClient::new(
-                    self.gate.clone(),
-                    ClientInfo::Normal {
+                let gclient = GClientBuilder::new()
+                    .gate(&self.gate)
+                    .info(ClientInfo::Normal {
                         player_id: id,
                         token: self.token.as_ref().unwrap().clone(),
-                    },
-                )?;
+                    })
+                    .build()
+                    .await?;
                 run_game_client(gclient, format!("[{}/{}]", self.username, player.name)).await?;
                 Ok(())
             }

@@ -11,7 +11,7 @@ enable_thread_id = false
 host = "192.168.1.4"
 port = 5432
 user = "postgres"
-password = "123aaa"
+password = "password"
 # optional config
 max_conn = 10
 min_conn = 3

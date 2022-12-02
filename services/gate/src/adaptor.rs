@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use async_trait::async_trait;
 use bytes::Bytes;
 use cspb::Message;
@@ -120,7 +121,7 @@ impl Adaptor for NatsAdaptor {
                         self.cstopic = format!("csp.{}", self.player_id);
                         return Ok((stream, sink));
                     }
-                    _unexpected => todo!(),
+                    _unexpected => return Err(anyhow!("unauthorized agent").into()),
                 }
             } else {
                 return Err(crate::Error::PBPayload.into());
