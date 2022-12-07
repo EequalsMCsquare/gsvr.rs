@@ -1,6 +1,8 @@
 FROM rust:1.65.0-buster as COMPILER
 WORKDIR /src
 COPY . .
+RUN apt-get update
+RUN apt-get install protobuf-compiler -y
 RUN cargo build --release
 
 FROM rust:1.65.0-slim-buster
