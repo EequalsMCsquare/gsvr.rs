@@ -10,6 +10,7 @@ pub struct Config {
     pub log: ConfigLog,
     pub mq: ConfigMQ,
     pub port: u16,
+    pub pf_url: String,
     pub env: Env,
 }
 
