@@ -667,6 +667,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "etcd-client"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1259da3b15ec7e54bd7203adb2c4335adb9ca1d47b56220d650e52c247e824a"
+dependencies = [
+ "http",
+ "prost",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-build",
+ "tower",
+ "tower-service",
+]
+
+[[package]]
 name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3089,6 +3105,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-nats",
+ "etcd-client",
  "jsonwebtoken",
  "once_cell",
  "pbkdf2",

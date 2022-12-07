@@ -1,6 +1,7 @@
 pub mod logger;
 pub mod nats;
 mod password;
+pub mod etcd;
 pub mod pgpool;
 mod custom_serde;
 pub mod gconf;

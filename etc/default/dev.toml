@@ -34,3 +34,11 @@ flush_interval = "50ms"
 algorithm = "RS256"
 encode_key = "file:etc/jwt-prikey.pem"
 decode_key = "file:etc/jwt-pubkey.pem"
+
+[etcd]
+endpoints = ["localhost:2379"]
+conn_timeout = "5s"
+request_timeout = "3s"
+keepalive_interval = "10s"
+keepalive_timeout = "3s"
+keepalive_idle = true

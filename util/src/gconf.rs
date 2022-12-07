@@ -1,6 +1,19 @@
 use crate::custom_serde::StrDuration;
 use serde::Deserialize;
 use std::time::Duration;
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct ConfigEtcd {
+    pub endpoints: Vec<String>,
+    pub conn_timeout: StrDuration,
+    pub request_timeout: StrDuration,
+    pub keepalive_interval: StrDuration,
+    pub keepalive_timeout: StrDuration,
+    pub keepalive_idle: bool,
+    pub user: Option<String>,
+    pub password: Option<String>,
+}
+
 #[derive(Deserialize, Debug, Default, Clone)]
 pub struct ConfigLog {
     pub level: Option<String>,
