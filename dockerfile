@@ -3,7 +3,7 @@ WORKDIR /src
 COPY . .
 RUN apt-get update
 RUN apt-get install protobuf-compiler -y
-RUN cargo build --release
+RUN cargo build --release --package game --package gate --package pf
 
 FROM rust:1.65.0-slim-buster
 WORKDIR /app 
