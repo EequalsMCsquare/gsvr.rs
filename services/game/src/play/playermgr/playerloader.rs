@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::play::{DBplayer, PLProtoReq, Player};
 use crate::{
     db::DBProtoReq,
-    hub::{GProto, ModuleName, PCS},
+    hub::{GProto, ModuleName, PMSG},
 };
 use crossbeam_queue::SegQueue;
 use dashmap::{DashMap, DashSet};
@@ -13,11 +13,11 @@ use sqlx::FromRow;
 
 pub struct PlayerLoader {
     loading_set: Arc<DashSet<i64, FxBuildHasher>>,
-    pending_map: Arc<DashMap<i64, SegQueue<Box<PCS>>, FxBuildHasher>>,
+    pending_map: Arc<DashMap<i64, SegQueue<PMSG>, FxBuildHasher>>,
     db_caller: Arc<CallTx<GProto, ModuleName, crate::Error>>,
     play_caller: Arc<CallTx<GProto, ModuleName, crate::Error>>,
     play_caster: Arc<CastTx<GProto, ModuleName, crate::Error>>,
-    pcs_rx: crossbeam_channel::Receiver<Box<PCS>>,
+    pcs_rx: crossbeam_channel::Receiver<PMSG>,
     close_rx: crossbeam_channel::Receiver<()>,
 }
 
@@ -26,7 +26,7 @@ impl PlayerLoader {
         db_caller: Arc<CallTx<GProto, ModuleName, crate::Error>>,
         play_caller: Arc<CallTx<GProto, ModuleName, crate::Error>>,
         play_caster: Arc<CastTx<GProto, ModuleName, crate::Error>>,
-        pcs_rx: crossbeam_channel::Receiver<Box<PCS>>,
+        pcs_rx: crossbeam_channel::Receiver<PMSG>,
         close_rx: crossbeam_channel::Receiver<()>,
     ) -> Self {
         Self {
@@ -58,7 +58,7 @@ impl PlayerLoader {
                     let cs = ret?;
                     // check if player already loaded
                     if self.loading_set.contains(&cs.player_id) {
-                        self.play_caster.blocking_cast(GProto::PCS(cs));
+                        self.play_caster.blocking_cast(GProto::PMSG(cs));
                         continue;
                     }
                     // if the loading is already pended, just push the new PCS to the queue
@@ -121,8 +121,8 @@ impl PlayerLoader {
                                                     loading_set.insert(player_id);
                                                     // remove player from pending map
                                                     let (_, pcs_queue) = pending_map.remove(&player_id).unwrap();
-                                                    for pcs in pcs_queue {
-                                                        play_caster.cast(GProto::PCS(pcs)).await;
+                                                    for pmsg in pcs_queue {
+                                                        play_caster.cast(GProto::PMSG(pmsg)).await;
                                                     }
                                                     // delay removing player loaded mark
                                                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;

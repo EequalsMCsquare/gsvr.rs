@@ -2,18 +2,19 @@ syntax = "proto3";
 import "Enum.proto";
 package cspb.msg;
 
+
 message CsFastLogin {
     int64 player_id = 1;
 }
 message ScFastLogin {
-    Enum.ErrCode errCode = 1;
+    ErrCode errCode = 1;
 }
 message CsLogin {
     string token = 1;
     int64 player_id = 2;
 }
 message ScLogin {
-    Enum.ErrCode errCode = 1;
+    ErrCode errCode = 1;
 }
 
 message CsEcho {

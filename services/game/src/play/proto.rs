@@ -1,10 +1,10 @@
-use crate::hub::PCS;
+use crate::hub::PMSG;
 
 use super::player::Player;
 
 // Worker Proto, used for communication between Play component and their workers
 pub enum WProto {
-    PCS(Box<PCS>),
+    PMSG(PMSG),
     AddPlayer(Player),
 }
 

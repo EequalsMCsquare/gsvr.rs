@@ -1,4 +1,4 @@
-use crate::custom_serde::StrDuration;
+use gsfw::util::custom_serde::StrDuration;
 use serde::Deserialize;
 use std::time::Duration;
 

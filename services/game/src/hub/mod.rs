@@ -1,6 +1,6 @@
 mod proto;
 use gsfw::chanrpc;
-pub use proto::{GProto, TimerArgs, PCS, PSC};
+pub use proto::{GProto, TimerArgs, PMSG};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use tokio::sync::mpsc;

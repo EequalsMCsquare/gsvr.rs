@@ -8,7 +8,7 @@ enable_thread_name = false
 enable_thread_id = false
 
 [database]
-host = "192.168.1.4"
+host = "192.168.1.6"
 port = 5432
 user = "postgres"
 password = "password"
@@ -20,7 +20,7 @@ min_conn = 3
 
 [mq]
 chanbuf = 1024
-host = "127.0.0.1"
+host = "192.168.1.6"
 port = 4222
 #optional config
 conn_timeout = "5s"

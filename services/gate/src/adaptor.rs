@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use async_trait::async_trait;
-use bytes::Bytes;
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 use cspb::Message;
 use futures::{SinkExt, StreamExt};
 use gsfw::{codec, network::*};
@@ -46,6 +46,21 @@ pub struct NatsAdaptor {
     auth: spb::AuthServiceClient<tonic::transport::Channel>,
 }
 
+fn unpack_proto(mut buf: Bytes) -> (i32, Bytes) {
+    (buf.get_i32(), buf)
+}
+
+fn pack_proto<T>(msg: T) -> Bytes
+where
+    T: Message + gsfw::Protocol,
+{
+    let len = std::mem::size_of::<i32>() + msg.encoded_len();
+    let mut buf = BytesMut::with_capacity(len);
+    buf.put_i32(T::MSG_ID);
+    msg.encode(&mut buf).unwrap();
+    buf.freeze()
+}
+
 #[async_trait]
 impl Adaptor for NatsAdaptor {
     type RecvItem = Bytes;
@@ -63,69 +78,68 @@ impl Adaptor for NatsAdaptor {
     {
         if let Some(msg) = stream.next().await {
             let msg = msg?;
-            let pbmsg = cspb::CsProto::decode(msg)?;
-            if let Some(payload) = pbmsg.payload {
-                match payload {
-                    cspb::CsMsg::CsLogin(msg) => {
-                        match self
-                            .auth
-                            .verify_token(VerifyTokenReq { token: msg.token })
-                            .await
-                        {
-                            Ok(ack) => {
-                                let ack = ack.into_inner();
-                                tracing::info!("verify_token success. {:?}", ack);
-                                let reply = cspb::ScProto {
-                                    payload: Some(cspb::ScMsg::ScLogin(cspb::ScLogin {
-                                        err_code: cspb::ErrCode::Success as i32,
-                                    })),
-                                };
-                                sink.send(reply.encode_to_vec().into()).await?;
-                                self.player_id = msg.player_id;
-                                self.sub = match self
-                                    .nats
-                                    .subscribe(format!("scp.{}", self.player_id))
-                                    .await
-                                {
-                                    Ok(sub) => sub,
-                                    Err(err) => return Err(err),
-                                };
-                                self.cstopic = format!("csp.{}", self.player_id);
-                                Ok((stream, sink))
-                            }
-                            Err(err) => {
-                                tracing::error!("verify_token error. {}", err);
-                                let reply = cspb::ScProto {
-                                    payload: Some(cspb::ScMsg::ScLogin(cspb::ScLogin {
-                                        err_code: cspb::ErrCode::Internal as i32,
-                                    })),
-                                };
-                                sink.send(reply.encode_to_vec().into()).await?;
-                                Err(crate::Error::VerToken(err).into())
-                            }
-                        }
-                    }
-                    cspb::CsMsg::CsFastLogin(msg) => {
-                        self.player_id = msg.player_id;
-                        let reply = cspb::ScProto {
-                            payload: Some(cspb::ScMsg::ScFastLogin(cspb::ScFastLogin {
-                                err_code: cspb::ErrCode::Success.into(),
-                            })),
-                        };
-                        sink.send(reply.encode_to_vec().into()).await?;
-                        self.sub =
-                            match self.nats.subscribe(format!("scp.{}", self.player_id)).await {
+            let (msgid, buf) = unpack_proto(msg);
+            // check if the message is registered
+            let msgid = cspb::MsgId::from_i32(msgid).ok_or(anyhow!("unknown MsgId: {}", msgid))?;
+            // check msgid is CsLogin or CsFastLogin
+            return match msgid {
+                cspb::MsgId::CsLogin => {
+                    let req = cspb::CsLogin::decode(buf)?;
+                    match self
+                        .auth
+                        .verify_token(VerifyTokenReq { token: req.token })
+                        .await
+                    {
+                        Ok(ack) => {
+                            let ack = ack.into_inner();
+                            tracing::info!("verify_token success. {:?}", ack);
+                            let reply = cspb::ScLogin {
+                                err_code: cspb::ErrCode::Success as i32,
+                            };
+                            let proto = pack_proto(reply);
+                            sink.send(proto).await?;
+                            self.player_id = req.player_id;
+                            self.sub = match self
+                                .nats
+                                .subscribe(format!("scp.{}", self.player_id))
+                                .await
+                            {
                                 Ok(sub) => sub,
                                 Err(err) => return Err(err),
                             };
-                        self.cstopic = format!("csp.{}", self.player_id);
-                        return Ok((stream, sink));
+                            self.cstopic = format!("csp.{}", self.player_id);
+                            Ok((stream, sink))
+                        }
+                        Err(err) => {
+                            tracing::error!("verify_token error. {}", err);
+                            let reply = cspb::ScLogin {
+                                err_code: cspb::ErrCode::Internal as i32,
+                            };
+                            let proto = pack_proto(reply);
+                            sink.send(proto).await?;
+                            Err(crate::Error::VerToken(err).into())
+                        }
                     }
-                    _unexpected => return Err(anyhow!("unauthorized agent").into()),
                 }
-            } else {
-                return Err(crate::Error::PBPayload.into());
-            }
+                cspb::MsgId::CsFastLogin => {
+                    let req = cspb::CsFastLogin::decode(buf)?;
+                    self.player_id = req.player_id;
+                    let reply = cspb::ScFastLogin {
+                            err_code: cspb::ErrCode::Success.into(),
+                    };
+                    let proto = pack_proto(reply);
+                    sink.send(proto).await?;
+                    self.sub =
+                        match self.nats.subscribe(format!("scp.{}", self.player_id)).await {
+                            Ok(sub) => sub,
+                            Err(err) => return Err(err),
+                        };
+                    self.cstopic = format!("csp.{}", self.player_id);
+                    Ok((stream, sink))
+
+                }
+                _unexpected => Err(anyhow!("unauthorized agent").into()),
+            };
         } else {
             return Err(crate::Error::ReadZero.into());
         }

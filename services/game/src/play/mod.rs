@@ -9,14 +9,13 @@ use self::{
     proto::WProto,
 };
 use crate::{
-    hub::{ChanCtx, GProto, Hub, ModuleName, PCS, PSC},
+    hub::{ChanCtx, GProto, Hub, ModuleName, PMSG},
     nats::MQProtoReq,
 };
 use anyhow::{anyhow, bail};
 use async_trait::async_trait;
 pub use builder::Builder;
-use cspb::Message;
-use gsfw::{chanrpc::broker::Broker, component};
+use gsfw::{chanrpc::broker::Broker, component, RegistryExt};
 use hashbrown::HashSet;
 pub use proto::{PLProtoAck, PLProtoReq};
 use std::{error::Error as StdError, sync::Arc};
@@ -27,7 +26,7 @@ pub struct PlayComponent {
     workers: Vec<(
         worker::Worker,
         crossbeam_channel::Sender<WProto>,
-        crossbeam_channel::Receiver<Box<PSC>>,
+        crossbeam_channel::Receiver<PMSG>,
     )>,
     rx: mpsc::Receiver<ChanCtx>,
     broker: Hub,
@@ -70,7 +69,7 @@ impl PlayComponent {
         let psc_handle = std::thread::spawn(move || loop {
             crossbeam_channel::select! {
                 recv(prx) -> msg => match msg {
-                    Ok(psc) => psc_casttx.blocking_cast(GProto::PSC(psc)),
+                    Ok(pmsg) => psc_casttx.blocking_cast(GProto::PMSG(pmsg)),
                     Err(err) => {
                         tracing::error!("[PSC thread]. {}", err);
                         break;
@@ -79,23 +78,23 @@ impl PlayComponent {
                 recv(close_rx1) -> _ => return
             }
         });
-        let (pltx, plrx) = crossbeam_channel::bounded::<Box<PCS>>(1024);
+        let (pltx, plrx) = crossbeam_channel::bounded::<PMSG>(1024);
         let pload = PlayerLoader::new(
             Arc::new(self.broker.call_tx(ModuleName::DB)),
             Arc::new(self.broker.call_tx(ModuleName::Play)),
             Arc::new(self.broker.cast_tx(ModuleName::Play)),
             plrx,
-            close_rx.clone()
+            close_rx.clone(),
         );
         let pload_handle = std::thread::spawn(move || pload.run());
 
         // handle message
         while let Some(req) = self.rx.recv().await {
             match req.payload() {
-                GProto::PCS(msg) => {
+                GProto::PMSG(msg) => {
                     // check player loaded
                     if self._pset.contains(&msg.player_id) {
-                        wtx.send(WProto::PCS(msg))?;
+                        wtx.send(WProto::PMSG(msg))?;
                     } else {
                         // send pcs to PlayerLoader
                         pltx.send(msg)?;
@@ -152,18 +151,11 @@ impl PlayComponent {
     fn pmsg_decode_fn(msg: async_nats::Message) -> anyhow::Result<GProto> {
         if let Some(strpid) = msg.subject.split('.').skip(1).last() {
             if let Ok(num) = strpid.parse() {
-                let proto = match cspb::CsProto::decode(msg.payload) {
-                    Ok(csproto) => csproto,
-                    Err(err) => return Err(anyhow!("{:?}", err)),
-                };
-                if let Some(payload) = proto.payload {
-                    return Ok(GProto::PCS(Box::new(PCS {
-                        player_id: num,
-                        message: payload,
-                    })));
-                } else {
-                    bail!("no payload")
-                }
+                let proto = cspb::Registry::decode_frame(msg.payload)?;
+                Ok(GProto::PMSG(PMSG {
+                    player_id: num,
+                    message: proto,
+                }))
             } else {
                 bail!("invalid MQ message: {:?}", msg);
             }

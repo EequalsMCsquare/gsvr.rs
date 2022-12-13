@@ -5,28 +5,26 @@ fn main() -> Result<()> {
         .out_dir("src/")
         .type_attribute(
             ".cspb.msg",
+            "#[derive(::serde::Serialize, ::serde::Deserialize, ::gsfw::Protocol)]",
+        )
+        .type_attribute(
+            ".cspb.Gender",
             "#[derive(::serde::Serialize, ::serde::Deserialize)]",
+        )
+        .type_attribute(
+            ".cspb.msg",
+            "#[protocol(registry=\"super::registry::MsgId\")]",
         )
         .type_attribute(
             "cspb.Enum.Gender",
             "#[derive(::serde::Serialize, ::serde::Deserialize)]",
         )
+        .type_attribute(".cspb.registry.MsgId", "#[derive(::gsfw::Registry)]")
         .type_attribute(
-            ".cspb.registry.CsProto",
-            "#[derive(::serde::Serialize, ::serde::Deserialize)]",
+            ".cspb.registry.MsgId",
+            "#[registry(prefix=\"super::msg::\",rename=\"Registry\")]",
         )
-        .type_attribute(
-            ".cspb.registry.CsProto.payload",
-            "#[derive(::strum::EnumIter, ::strum::EnumVariantNames)]",
-        )
-        .type_attribute(
-            ".cspb.registry.ScProto",
-            "#[derive(::serde::Serialize, ::serde::Deserialize)]",
-        )
-        .type_attribute(
-            ".cspb.registry.ScProto.payload",
-            "#[derive(::strum::EnumIter, ::strum::EnumVariantNames)]",
-        )
+        .field_attribute(".cspb.registry.MsgId.__RESERVED", "#[registry(skip)]")
         .compile_protos(&["proto/registry.proto"], &["proto"])?;
     Ok(())
 }

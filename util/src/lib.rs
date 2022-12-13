@@ -1,11 +1,10 @@
+pub mod etcd;
+pub mod gconf;
+pub mod jwt;
 pub mod logger;
 pub mod nats;
 mod password;
-pub mod etcd;
 pub mod pgpool;
-mod custom_serde;
-pub mod gconf;
-pub mod jwt;
-pub use time::Duration;
-pub use password::Password;
 pub use jwt::Jwt;
+pub use password::Password;
+pub use time::Duration;

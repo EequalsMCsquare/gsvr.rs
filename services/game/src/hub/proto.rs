@@ -6,23 +6,29 @@ use crate::{
 use gsfw::chanrpc;
 use std::fmt::Debug;
 
-#[derive(Debug)]
-pub struct PCS {
-    pub player_id: i64,
-    pub message: cspb::CsMsg,
-}
+// #[derive(Debug)]
+// pub struct PCS {
+//     pub player_id: i64,
+//     pub message: cspb::CsMsg,
+// }
 
-#[derive(Debug)]
-pub struct PSC {
+// #[derive(Debug)]
+// pub struct PSC {
+//     pub player_id: i64,
+//     pub message: cspb::ScMsg,
+// }
+
+pub struct PMSG {
     pub player_id: i64,
-    pub message: cspb::ScMsg,
+    pub message: cspb::Registry,
 }
 
 #[allow(dead_code)]
 #[derive(strum::IntoStaticStr)]
 pub enum GProto {
-    PCS(Box<PCS>),
-    PSC(Box<PSC>),
+    // PCS(Box<PCS>),
+    // PSC(Box<PSC>),
+    PMSG(PMSG),
     Ok,
     CtrlShutdown,
 

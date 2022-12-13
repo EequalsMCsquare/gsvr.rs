@@ -1,4 +1,3 @@
-use cspb::Message;
 use tokio::sync::mpsc;
 mod builder;
 mod handler;
@@ -9,7 +8,8 @@ use crate::{
 };
 pub use builder::Builder;
 use gsfw::component;
-pub use proto::{MQProtoReq, MQProtoAck};
+use gsfw::RegistryExt;
+pub use proto::{MQProtoAck, MQProtoReq};
 use std::error::Error as StdError;
 
 pub struct NatsComponent {
@@ -29,23 +29,18 @@ impl component::Component<Hub> for NatsComponent {
     }
 
     async fn run(mut self: Box<Self>) -> Result<(), Box<dyn StdError + Send>> {
-        let mut msg = cspb::ScProto::default();
         loop {
             match self.rx.recv().await {
                 Some(req) => {
                     match req.payload() {
-                        GProto::PSC(psc) => {
+                        GProto::PMSG(pmsg) => {
                             // todo: try not call clone
-                            msg.payload = Some(psc.message.clone());
                             if let Err(err) = self
                                 .nats
-                                .publish(
-                                    format!("scp.{}", psc.player_id),
-                                    msg.encode_to_vec().into(),
-                                )
+                                .publish(format!("scp.{}", pmsg.player_id), pmsg.message.encode())
                                 .await
                             {
-                                tracing::error!("fail to publish scpmsg.*. {}", err);
+                                tracing::error!("fail to publish scp.*. {}", err);
                             }
                         }
                         GProto::MQProtoReq(inner) => match inner {
@@ -65,7 +60,9 @@ impl component::Component<Hub> for NatsComponent {
                             }
                             MQProtoReq::SubTopicReq(topic) => {
                                 match self.nats.subscribe(topic.clone()).await {
-                                    Ok(sub) => req.ok(GProto::MQProtoAck(MQProtoAck::SubTopicAck(sub))),
+                                    Ok(sub) => {
+                                        req.ok(GProto::MQProtoAck(MQProtoAck::SubTopicAck(sub)))
+                                    }
                                     Err(err) => req.err(Error::NatsSub(err)),
                                 }
                             }

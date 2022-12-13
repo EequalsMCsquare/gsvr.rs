@@ -3,18 +3,14 @@ import "Enum.proto";
 import "01_player.proto";
 package cspb.registry;
 
-message CsProto{
-    oneof payload {
-        msg.CsLogin CsLogin = 1;
-        msg.CsEcho CsEcho = 2;
-        msg.CsFastLogin CsFastLogin = 3;
-    }
-}
+enum MsgId{
+    __RESERVED = 0;
+    
+    CsLogin = 101;
+    ScLogin = 102;
+    CsFastLogin = 103;
+    ScFastLogin = 104;
 
-message ScProto {
-    oneof payload {
-        msg.ScLogin ScLogin = 6000;
-        msg.ScEcho ScEcho = 6001;
-        msg.ScFastLogin ScFastLogin = 3;
-    }
+    CsEcho = 201;
+    ScEcho = 202;
 }
