@@ -55,9 +55,9 @@ pub struct GClient {
 impl GClient {
     async fn auth_fast_login(&mut self) -> anyhow::Result<()> {
         if let ClientInfo::FastLogin { player_id } = self._info {
-            let msg = cspb::CsMsg::CsFastLogin(cspb::CsFastLogin { player_id });
-            self.wr.send(msg).await?;
-            if let Some(Ok(cspb::ScMsg::ScFastLogin(ack))) = self.rd.next().await {
+            let msg = cspb::CsFastLogin { player_id };
+            self.wr.send(msg.into()).await?;
+            if let Some(Ok(cspb::Registry::ScFastLogin(ack))) = self.rd.next().await {
                 if ack.err_code() == cspb::ErrCode::Success {
                     Ok(())
                 } else {
@@ -73,12 +73,12 @@ impl GClient {
 
     async fn auth_normal(&mut self) -> anyhow::Result<()> {
         if let ClientInfo::Normal { player_id, token } = &self._info {
-            let msg = cspb::CsMsg::CsLogin(cspb::CsLogin {
+            let msg = cspb::CsLogin {
                 token: token.clone(),
                 player_id: *player_id,
-            });
-            self.wr.send(msg).await?;
-            if let Some(Ok(cspb::ScMsg::ScLogin(ack))) = self.rd.next().await {
+            };
+            self.wr.send(msg.into()).await?;
+            if let Some(Ok(cspb::Registry::ScLogin(ack))) = self.rd.next().await {
                 if ack.err_code() == cspb::ErrCode::Success {
                     Ok(())
                 } else {
@@ -102,12 +102,12 @@ impl GClient {
         }
     }
 
-    pub async fn send(&mut self, msg: cspb::CsMsg) -> anyhow::Result<()> {
+    pub async fn send(&mut self, msg: cspb::Registry) -> anyhow::Result<()> {
         self.wr.send(msg).await?;
         Ok(())
     }
 
-    pub async fn recv(&mut self) -> anyhow::Result<cspb::ScMsg> {
+    pub async fn recv(&mut self) -> anyhow::Result<cspb::Registry> {
         if let Some(msg) = self.rd.next().await {
             msg
         } else {

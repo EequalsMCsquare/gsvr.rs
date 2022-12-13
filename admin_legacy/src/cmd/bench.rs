@@ -5,10 +5,10 @@ use crate::client::{
 use tokio::{sync::broadcast, task::JoinHandle};
 
 pub struct Cmder {
-    tx: broadcast::Sender<Option<cspb::CsMsg>>,
+    tx: broadcast::Sender<Option<cspb::Registry>>,
     gate: String,
     iter: usize,
-    script: Vec<cspb::CsMsg>,
+    script: Vec<cspb::Registry>,
     clients: Vec<JoinHandle<Metrics>>,
 }
 
@@ -77,7 +77,7 @@ impl Cmder {
         }
     }
 
-    pub fn add_script(&mut self, cs: cspb::CsMsg, count: usize) {
+    pub fn add_script(&mut self, cs: cspb::Registry, count: usize) {
         self.script.append(&mut vec![cs; count])
     }
 
@@ -97,7 +97,7 @@ impl Cmder {
 pub async fn run_bench(gate: String, iter: usize, client_count: usize) -> anyhow::Result<()> {
     let mut cmder = Cmder::new(gate, iter, client_count);
     cmder.add_script(
-        cspb::CsMsg::CsEcho(cspb::CsEcho {
+        cspb::Registry::CsEcho(cspb::CsEcho {
             content: "hello".to_string(),
         }),
         20,

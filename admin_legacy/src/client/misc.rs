@@ -9,8 +9,8 @@ pub enum ClientInfo {
 
 #[async_trait]
 pub trait AdminClient {
-    async fn send(&mut self, msg: cspb::CsMsg) -> anyhow::Result<()>;
-    async fn recv(&mut self) -> anyhow::Result<cspb::ScMsg>;
+    async fn send(&mut self, msg: cspb::Registry) -> anyhow::Result<()>;
+    async fn recv(&mut self) -> anyhow::Result<cspb::Registry>;
 }
 
 #[derive(Deserialize, Clone)]

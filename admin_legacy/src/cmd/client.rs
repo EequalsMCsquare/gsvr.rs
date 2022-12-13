@@ -157,7 +157,7 @@ admin client api:
 #[derive(strum::EnumVariantNames, PartialEq, Debug)]
 #[strum(serialize_all = "snake_case")]
 enum GameCmd {
-    Send(cspb::CsMsg),
+    Send(cspb::Registry),
     Logout,
     Help,
 }
@@ -194,7 +194,7 @@ impl FromStr for GameCmd {
 
 impl GameCmd {
     const CSMSG_NAME_PAYLOAD: Lazy<HashMap<&'static str, String>> = Lazy::new(|| {
-        cspb::CsMsg::iter()
+        cspb::Registry::iter()
             .enumerate()
             .map(|(idx, payload)| {
                 let pstr = serde_json::to_string(&payload).expect("serialize error");

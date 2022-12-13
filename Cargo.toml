@@ -5,8 +5,8 @@ members = [
 	"services/pf",
 	"services/spb",
 	"cspb",
-	"admin",
 	"util",
+	"admin/src-tauri",
 ]
 
 [workspace.dependencies]

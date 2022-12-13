@@ -22,7 +22,7 @@ async fn main() -> anyhow::Result<()> {
         ..Default::default()
     });
     let args = cli::Args::parse();
-    let pfclient = PfClient::new("http://localhost:8100".to_string());
+    let pfclient = PfClient::new("http://192.168.1.6:8100".to_string());
     match args.subcmd {
         cli::SubCmds::FClient { player_id } => {
             let gclient = GClientBuilder::new()

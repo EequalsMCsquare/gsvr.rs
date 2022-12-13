@@ -1,20 +1,21 @@
-use anyhow::anyhow;
 use bytes::{Buf, BufMut};
 use gsfw::codec;
-use cspb::Message;
+use gsfw::RegistryExt;
 
 #[derive(Clone)]
 pub struct Encoder;
 
-impl codec::Encoder<cspb::CsMsg> for Encoder {
+impl codec::Encoder<cspb::Registry> for Encoder {
     type Error = anyhow::Error;
 
-    fn encode(&mut self, item: cspb::CsMsg, dst: &mut bytes::BytesMut) -> Result<(), Self::Error> {
-        let msg = cspb::CsProto {
-            payload: Some(item),
-        };
-        dst.put_u32(msg.encoded_len() as u32);
-        msg.encode(dst)?;
+    fn encode(
+        &mut self,
+        item: cspb::Registry,
+        dst: &mut bytes::BytesMut,
+    ) -> Result<(), Self::Error> {
+        let len = item.encoded_len();
+        dst.put_u32(len as u32);
+        item.encode_to(dst)?;
         return Ok(());
     }
 }
@@ -25,7 +26,7 @@ pub struct Decoder {
 }
 
 impl codec::Decoder for Decoder {
-    type Item = cspb::ScMsg;
+    type Item = cspb::Registry;
 
     type Error = anyhow::Error;
 
@@ -38,10 +39,6 @@ impl codec::Decoder for Decoder {
             return Ok(None);
         }
         let payload_buf = src.copy_to_bytes(self.ctx_payload_len);
-        let msg = cspb::ScProto::decode(payload_buf)?;
-        match msg.payload {
-            Some(payload) => Ok(Some(payload)),
-            None => Err(anyhow!("message payload is None")),
-        }
+        Ok(Some(cspb::Registry::decode_frame(payload_buf)?))
     }
 }
