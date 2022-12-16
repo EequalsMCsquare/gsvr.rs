@@ -8,7 +8,7 @@
 					:on-update:value="updateMenu"
 					/>
 			</n-layout-sider>
-			<n-layout>
+			<n-layout style="height: 100vh;">
 				<Suspense>
 					<template #default>
 						<router-view />

@@ -7,11 +7,13 @@ members = [
 	"cspb",
 	"util",
 	"admin/src-tauri",
+	"admin/plugins/tauri-plugin-agentmgr",
+	"admin/plugins/tauri-plugin-hint",
 ]
 
 [workspace.dependencies]
-gsfw = {git = "https://github.com/EequalsMCsquare/gsfw.rs.git", branch = "master", features = ["util", "derive"]}
-# gsfw = {path = "../gsfw/gsfw", features = ["util", "derive"]}
+# gsfw = {git = "https://github.com/EequalsMCsquare/gsfw.rs.git", branch = "master", features = ["util", "derive"]}
+gsfw = {path = "../gsfw/gsfw", features = ["util", "derive"]}
 # gsfw = {version = "0.1.1", features = ["util"]}
 async-trait = "0.1.57"
 parking_lot = { version = "0.12", features = ['serde'] }

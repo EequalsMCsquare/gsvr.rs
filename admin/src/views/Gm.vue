@@ -1,3 +1,5 @@
 <template>
-    <h1>GM</h1>
+    <div>
+        <h1>GM</h1>
+    </div>
 </template>
