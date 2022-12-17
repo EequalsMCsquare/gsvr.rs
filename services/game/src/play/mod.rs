@@ -23,11 +23,8 @@ use tokio::sync::mpsc;
 use tracing::info;
 
 pub struct PlayComponent {
-    workers: Vec<(
-        worker::Worker,
-        crossbeam_channel::Sender<WProto>,
-        crossbeam_channel::Receiver<PMSG>,
-    )>,
+    workers: Vec<(worker::Worker, crossbeam_channel::Sender<WProto>)>,
+    pmsg_rx: crossbeam_channel::Receiver<PMSG>,
     rx: mpsc::Receiver<ChanCtx>,
     broker: Hub,
 
@@ -58,7 +55,7 @@ impl component::Component<Hub> for PlayComponent {
 
 impl PlayComponent {
     async fn _single_worker_run(&mut self) -> anyhow::Result<()> {
-        let (mut worker, wtx, prx) = self.workers.remove(0);
+        let (mut worker, wtx) = self.workers.remove(0);
         let (close_tx, close_rx) = crossbeam_channel::bounded::<()>(1);
         // spawn running worker in a new thread
         let close_rx1 = close_rx.clone();
@@ -66,6 +63,7 @@ impl PlayComponent {
         let psc_casttx = self.broker.cast_tx(ModuleName::Nats);
         // spawn thread to proxy PSC to nats
         let close_rx1 = close_rx.clone();
+        let prx = self.pmsg_rx.clone();
         let psc_handle = std::thread::spawn(move || loop {
             crossbeam_channel::select! {
                 recv(prx) -> msg => match msg {

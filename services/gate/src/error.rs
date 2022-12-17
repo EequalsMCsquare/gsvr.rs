@@ -5,7 +5,7 @@ pub (crate) enum Error {
     DecodeToPB,
     #[error("invalid pb payload")]
     PBPayload,
-    #[error("unauthorized agent, first CsLogin or CsFastLogin first")]
+    #[error("unauthorized agent, CsLogin or CsFastLogin first")]
     UnAuth,
     #[error("connection close")]
     ReadZero,

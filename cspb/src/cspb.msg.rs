@@ -42,3 +42,17 @@ pub struct ScEcho {
     #[prost(string, tag="1")]
     pub reply: ::prost::alloc::string::String,
 }
+#[derive(::serde::Serialize, ::serde::Deserialize, ::gsfw::Protocol)]
+#[protocol(registry="super::registry::MsgId")]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CsPing {
+    #[prost(int64, tag="1")]
+    pub seq: i64,
+}
+#[derive(::serde::Serialize, ::serde::Deserialize, ::gsfw::Protocol)]
+#[protocol(registry="super::registry::MsgId")]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ScPing {
+    #[prost(int64, tag="1")]
+    pub seq: i64,
+}

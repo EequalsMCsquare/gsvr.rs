@@ -55,6 +55,7 @@ impl PlayerLoader {
         loop {
             crossbeam_channel::select! {
                 recv(self.pcs_rx) -> ret => {
+                    let start = time::Instant::now();
                     let cs = ret?;
                     // check if player already loaded
                     if self.loading_set.contains(&cs.player_id) {
@@ -111,6 +112,7 @@ impl PlayerLoader {
                                                     }
                                                 };
                                                 // ack Play module to add player
+                                                let pid = player.pid;
                                                 let ack = play_caller
                                                     .call(GProto::PLProtoReq(PLProtoReq::AddPlayer(player)))
                                                     .await;
@@ -124,6 +126,8 @@ impl PlayerLoader {
                                                     for pmsg in pcs_queue {
                                                         play_caster.cast(GProto::PMSG(pmsg)).await;
                                                     }
+                                                    let end = time::Instant::now();
+                                                    tracing::debug!("player-{} loaded. time used: {}", pid, end-start);
                                                     // delay removing player loaded mark
                                                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
                                                     loading_set.remove(&player_id);

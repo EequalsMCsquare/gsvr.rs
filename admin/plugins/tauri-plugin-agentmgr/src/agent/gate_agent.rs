@@ -142,6 +142,13 @@ pub struct FrontGateAgent {
     pub _pid: i64,
 }
 
+#[derive(Serialize)]
+pub struct GamePing {
+    start: i64,
+    end: i64,
+    dur: i64,
+}
+
 pub struct GateAgentProxy<R: Runtime> {
     pub pid: i64,
     req_tx: mpsc::Sender<cspb::Registry>,
@@ -265,19 +272,22 @@ impl<R: Runtime> GateAgent<R> {
         if !self.authorized {
             bail!("unauthorized agent")
         }
-        let (req_tx, mut req_rx) = mpsc::channel(16);
-        let (ack_tx, ack_rx) = mpsc::channel(16);
+        let (req_tx, mut req_rx) = mpsc::channel(256);
+        let (ack_tx, ack_rx) = mpsc::channel(256);
         let (ctrl_tx, mut ctrl_rx) = mpsc::channel(1);
         let mut ack_topic: Option<String> = None;
         let pid = self.pid;
         let his = self.his.clone();
         let his2 = his.clone();
+        
         let join = tokio::spawn(async move {
             loop {
                 tokio::select! {
                     req = req_rx.recv() => {
                         if let Some::<cspb::Registry>(req) = req {
-                            his.push_send(req.clone());
+                            if req.msgid() != cspb::MsgId::CsPing as i32{
+                                his.push_send(req.clone());
+                            }
                             self.fw.send(req).await.unwrap();
                         } else {
                             bail!("recv None from Request channel")
@@ -286,7 +296,9 @@ impl<R: Runtime> GateAgent<R> {
                     Some(ack) = self.fr.next() => {
                         match ack {
                             Ok(ack) => {
-                                his.push_recv(ack.clone());
+                                if ack.msgid() != cspb::MsgId::ScPing as i32 {
+                                    his.push_recv(ack.clone());
+                                }
                                 if let Some(topic) = &ack_topic {
                                     let new_his = FrontHistoryData{ msgid: ack.msgid(), name: ack.name(), payload: &ack };
                                     match serde_json::to_string(&new_his) {
@@ -294,7 +306,10 @@ impl<R: Runtime> GateAgent<R> {
                                         Err(err) => tracing::error!("{}", err)
                                     }
                                 }
-                                ack_tx.send(ack).await.unwrap();
+                                // only send reply when agent is not listen
+                                if ack_topic.is_none() {
+                                    ack_tx.send(ack).await.unwrap();
+                                }
                             },
                             Err(err) => {
                                 bail!("error occur when recv from FramedRead. {}", err)

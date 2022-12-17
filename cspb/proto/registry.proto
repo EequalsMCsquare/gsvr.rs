@@ -5,6 +5,8 @@ package cspb.registry;
 
 enum MsgId{
     __RESERVED = 0;
+    CsPing = 1;
+    ScPing = 2;
     
     CsLogin = 101;
     ScLogin = 102;

@@ -55,7 +55,7 @@ pub async fn add_gate_agent<R: Runtime>(
     let agent = if let Some(agent) = clients.remove_cold_agent(pid) {
         agent.run().unwrap()
     } else {
-        let stream = TcpStream::connect("192.168.1.6:8001")
+        let stream = TcpStream::connect("localhost:8001")
             .await
             .map_err(|err| err.to_string())?;
         let mut agent = GateAgent::new(pid, stream, window);

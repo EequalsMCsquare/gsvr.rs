@@ -23,3 +23,10 @@ message CsEcho {
 message ScEcho {
     string reply = 1;
 }
+
+message CsPing {
+    int64 seq = 1;
+}
+message ScPing {
+    int64 seq = 1;
+}

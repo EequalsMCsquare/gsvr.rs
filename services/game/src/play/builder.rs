@@ -12,20 +12,16 @@ pub struct Builder {
 
 impl component::ComponentBuilder<Hub> for Builder {
     fn build(self: Box<Self>) -> Box<dyn component::Component<Hub>> {
+        let (ptx, prx) = crossbeam_channel::bounded(8196);
         Box::new(PlayComponent {
             rx: self.rx.unwrap(),
             broker: self.brkr.unwrap(),
             _pset: Default::default(),
-            workers: vec![
-                (
-                    crossbeam_channel::bounded(4096),
-                    crossbeam_channel::bounded(4096)
-                );
-                self.worker_num
-            ]
-            .into_iter()
-            .map(|((wtx, wrx), (ptx, prx))| (Worker::new(wrx, ptx), wtx, prx))
-            .collect(),
+            workers: vec![crossbeam_channel::bounded(4096); self.worker_num]
+                .into_iter()
+                .map(|(wtx, wrx)| (Worker::new(wrx, ptx.clone()), wtx))
+                .collect(),
+            pmsg_rx: prx,
         })
     }
 

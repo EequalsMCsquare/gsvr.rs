@@ -1,6 +1,6 @@
 import { AgentMgr, AgentMgrData, AgentInfo } from "./agentmgr"
 import { AccountPlayer, PfAgent } from "./pf"
-import { GateAgent, GateAgentData } from "./gate";
+import { GateAgent, GateAgentData, PingInfo } from "./gate";
 import { HistoryData } from "./history";
 import { invoke } from "@tauri-apps/api";
 
@@ -29,6 +29,7 @@ export {
 export type {
   HistoryData,
   GateAgentData,
+  PingInfo,
   AgentMgr,
   GateAgent,
   AccountPlayer,

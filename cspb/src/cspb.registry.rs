@@ -5,6 +5,8 @@
 pub enum MsgId {
     #[registry(skip)]
     Reserved = 0,
+    CsPing = 1,
+    ScPing = 2,
     CsLogin = 101,
     ScLogin = 102,
     CsFastLogin = 103,
@@ -20,6 +22,8 @@ impl MsgId {
     pub fn as_str_name(&self) -> &'static str {
         match self {
             MsgId::Reserved => "__RESERVED",
+            MsgId::CsPing => "CsPing",
+            MsgId::ScPing => "ScPing",
             MsgId::CsLogin => "CsLogin",
             MsgId::ScLogin => "ScLogin",
             MsgId::CsFastLogin => "CsFastLogin",

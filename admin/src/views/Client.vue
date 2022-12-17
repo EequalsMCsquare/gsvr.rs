@@ -1,5 +1,5 @@
 <template>
-	<n-tabs v-model:value="currAgent" type="card" addable tab-style="min-width: 80px;" @add="showAddClient = true"
+	<n-tabs :value="currAgent" type="card" addable tab-style="min-width: 80px;" @add="showAddClient = true" @update:value="handleSwitch"
 		@close="handleClose">
 		<n-tab-pane v-for="agent in agents" closable :key="agent.key" :tab="agent.name" :name="agent.key">
 			<gate-agent-vue v-if="agent.typ === 'fast'" :agent="agentMgr.gateAgent(agent.name as number)!" />
@@ -26,7 +26,8 @@ let currAgent = ref("");
 const showAddClient = ref(false)
 
 const agentMgr = await useAgentMgr();
-const agents: AgentInfo[] = reactive(agentMgr.info === undefined ? agentMgr.info : []);
+console.log(agentMgr.info);
+const agents: AgentInfo[] = reactive(agentMgr.info !== undefined ? agentMgr.info : []);
 
 function handleClose(value: string) {
 	const index = agents.findIndex((v) => value === v.key)
@@ -46,6 +47,10 @@ function handleClose(value: string) {
 			}
 		})
 	}
+}
+
+function handleSwitch(tabname: string) {
+	currAgent.value = tabname;
 }
 
 function handleAddClient(kind: "normal" | "fast" | "reg", playerid?: number, username?: string, password?: string, email?: string, phone?: string) {

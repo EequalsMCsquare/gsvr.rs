@@ -1,7 +1,7 @@
 type HistoryData = {
 	msgid: number,
 	name: string,
-	payload: string,
+	payload: any,
 }
 
 export type {

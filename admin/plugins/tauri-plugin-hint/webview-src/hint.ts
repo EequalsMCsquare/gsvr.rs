@@ -20,7 +20,7 @@ class Hint {
 
     public get names(): string[] {
         return this.inner.pbnames.filter(v => (v.startsWith("cs") || v.startsWith("Cs")) &&
-            ["CsLogin", "CsFastLogin"].findIndex(v2 => v2 === v) === -1);
+            ["CsLogin", "CsFastLogin", "CsPing"].findIndex(v2 => v2 === v) === -1);
     }
 
     public get ids(): number[] {

@@ -14,9 +14,14 @@
     <n-grid-item span="3">
       <n-input-group style="height: 26vh;">
         <n-input type="textarea" v-model:value="csInput" />
-        <n-button type="primary" ghost style="height: 100%;" @click="csSend">
-          Send
-        </n-button>
+        <n-button-group vertical>
+          <n-button type="primary" ghost style="height: 50%; min-width: 90px;" @click="csSend">
+            Send
+          </n-button>
+          <n-button type="warning" ghost style="height: 50%;" disabled>
+            {{ping.ping}}ms
+          </n-button>
+        </n-button-group>
       </n-input-group>
     </n-grid-item>
   </n-grid>
@@ -24,18 +29,22 @@
 
 
 <script lang="ts" setup>
-import { NGrid, NGridItem, NSelect, NInput, NInputGroup, NButton } from 'naive-ui';
+import { NGrid, NGridItem, NSelect, NInput, NInputGroup, NButton, NButtonGroup, NThing } from 'naive-ui';
 import HistoryVue from './History.vue';
 import { useHint } from 'hint-api';
-import { GateAgent, HistoryData } from 'agentmgr-api'
+import { GateAgent, HistoryData, PingInfo } from 'agentmgr-api'
 import { ref, onBeforeUnmount, reactive } from 'vue';
 
 const props = defineProps<{
   agent: GateAgent
 }>();
+
 const csHistory: HistoryData[] = reactive(new Array);
 const scHistory: HistoryData[] = reactive(new Array);
+const ping: PingInfo = reactive({ping: 0})
+
 await props.agent.useHistory(csHistory, scHistory);
+await props.agent.usePing(ping);
 const hint = await useHint();
 const pbName = ref("");
 const csInput = ref("");

@@ -108,6 +108,7 @@ impl Adaptor for NatsAdaptor {
                                 Err(err) => return Err(err),
                             };
                             self.cstopic = format!("csp.{}", self.player_id);
+                            tracing::debug!("player-{} normal login success", self.player_id);
                             Ok((stream, sink))
                         }
                         Err(err) => {
@@ -135,8 +136,8 @@ impl Adaptor for NatsAdaptor {
                             Err(err) => return Err(err),
                         };
                     self.cstopic = format!("csp.{}", self.player_id);
+                    tracing::debug!("player-{} fast login success", self.player_id);
                     Ok((stream, sink))
-
                 }
                 _unexpected => Err(anyhow!("unauthorized agent").into()),
             };
@@ -165,7 +166,10 @@ impl Adaptor for NatsAdaptor {
     async fn recv(&mut self) -> Result<Option<Self::RecvItem>, Box<dyn std::error::Error + Send>> {
         match tokio::time::timeout(std::time::Duration::from_secs(60 * 3), self.sub.next()).await {
             Ok(ret) => Ok(ret.map(|m| m.payload)),
-            Err(_) => Ok(None),
+            Err(err) => {
+                tracing::error!("players-{} {}", self.player_id, err);
+                Ok(None)
+            }
         }
     }
 }
