@@ -23,6 +23,8 @@ pub enum Error {
     NatsSub(Box<dyn std::error::Error + Send + Sync>),
     #[error("nats publish error: {0}")]
     NatsPub(Box<dyn std::error::Error + Send + Sync>),
+    #[error("[Timer] {0}")]
+    TimeWheel(String)
 }
 
 impl From<mpsc::error::SendError<ChanCtx>> for Error {

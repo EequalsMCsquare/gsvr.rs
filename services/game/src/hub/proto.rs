@@ -1,7 +1,7 @@
 use crate::{
     db::{DBProtoAck, DBProtoReq},
     nats::{MQProtoAck, MQProtoReq},
-    play::{PLProtoAck, PLProtoReq},
+    play::{PLProtoAck, PLProtoReq}, timer::{TMProtoReq, TMProtoAck, TMProtoNtf},
 };
 use gsfw::chanrpc;
 use std::fmt::Debug;
@@ -38,6 +38,9 @@ pub enum GProto {
     DBProtoAck(DBProtoAck),
     PLProtoReq(PLProtoReq),
     PLProtoAck(PLProtoAck),
+    TMProtoReq(TMProtoReq),
+    TMProtoAck(TMProtoAck),
+    TMProtoNtf(TMProtoNtf),
 }
 
 impl chanrpc::Proto for GProto {

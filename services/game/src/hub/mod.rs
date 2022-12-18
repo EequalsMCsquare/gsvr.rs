@@ -13,7 +13,7 @@ pub struct Hub {
     play: mpsc::Sender<ChanCtx>,
     nats: mpsc::Sender<ChanCtx>,
     db: mpsc::Sender<ChanCtx>,
-    // timer: mpsc::Sender<ChanCtx>,
+    timer: mpsc::Sender<ChanCtx>,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, strum::EnumIter)]
@@ -21,7 +21,7 @@ pub enum ModuleName {
     Play,
     Nats,
     DB,
-    // Timer,
+    Timer,
 }
 
 impl chanrpc::Name for ModuleName {}
@@ -42,7 +42,7 @@ impl chanrpc::broker::Broker for Hub {
             ModuleName::Play => &self.play,
             ModuleName::Nats => &self.nats,
             ModuleName::DB => &self.db,
-            // ModuleName::Timer => &self.timer,
+            ModuleName::Timer => &self.timer,
         }
     }
 
@@ -52,7 +52,7 @@ impl chanrpc::broker::Broker for Hub {
             play: tx_map.get(&ModuleName::Play).unwrap().clone(),
             nats: tx_map.get(&ModuleName::Nats).unwrap().clone(),
             db: tx_map.get(&ModuleName::DB).unwrap().clone(),
-            // timer: tx_map.get(&ModuleName::Timer).unwrap().clone(),
+            timer: tx_map.get(&ModuleName::Timer).unwrap().clone(),
         }
     }
 }

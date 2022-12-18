@@ -11,11 +11,12 @@ use self::{
 use crate::{
     hub::{ChanCtx, GProto, Hub, ModuleName, PMSG},
     nats::MQProtoReq,
+    timer::{TMProtoReq, TimerKind},
 };
 use anyhow::{anyhow, bail};
 use async_trait::async_trait;
 pub use builder::Builder;
-use gsfw::{chanrpc::broker::Broker, component, RegistryExt};
+use gsfw::{chanrpc::broker::Broker, component, util::unwrap_as, RegistryExt};
 use hashbrown::HashSet;
 pub use proto::{PLProtoAck, PLProtoReq};
 use std::{error::Error as StdError, sync::Arc};
@@ -46,16 +47,19 @@ impl component::Component<Hub> for PlayComponent {
         .map_err(Into::into)
     }
 
-    async fn init(&mut self) -> Result<(), Box<dyn StdError + Send>> {
+    async fn init(
+        mut self: Box<Self>,
+    ) -> Result<Box<dyn component::Component<Hub>>, Box<dyn StdError + Send>> {
         // register player message to mpsc::Receiver
-        self.init_sub_pmsg().await.unwrap();
-        Ok(())
+        self.init_sub_pmsg().await?;
+        self.init_timers().await?;
+        Ok(self)
     }
 }
 
 impl PlayComponent {
     async fn _single_worker_run(&mut self) -> anyhow::Result<()> {
-        let (mut worker, wtx) = self.workers.remove(0);
+        let (worker, wtx) = self.workers.remove(0);
         let (close_tx, close_rx) = crossbeam_channel::bounded::<()>(1);
         // spawn running worker in a new thread
         let close_rx1 = close_rx.clone();
@@ -107,6 +111,9 @@ impl PlayComponent {
                         req.ok(GProto::Ok);
                     }
                 },
+                GProto::TMProtoNtf(snapshot) => {
+                    tracing::debug!("[Game] timer trigger: {:#?}", snapshot);
+                }
                 GProto::CtrlShutdown => {
                     info!("[play] recv shutdown");
                     close_tx.send(()).unwrap();
@@ -130,7 +137,7 @@ impl PlayComponent {
 
     async fn init_sub_pmsg(
         &mut self,
-    ) -> std::result::Result<(), Box<(dyn StdError + std::marker::Send + 'static)>> {
+    ) -> anyhow::Result<()> {
         if let Err(err) = Broker::call(
             &self.broker,
             ModuleName::Nats,
@@ -141,8 +148,13 @@ impl PlayComponent {
         )
         .await
         {
-            return Err(anyhow!("fail to register player message to self broker. {}", err).into());
+            return Err(anyhow!("fail to register player message to self broker. {}", err));
         }
+        Ok(())
+    }
+
+    async fn init_timers(&mut self) ->  anyhow::Result<()> {
+        self.dispatch_timeout(std::time::Duration::from_secs(5), TimerKind::GameDataLanding).await?;
         Ok(())
     }
 
@@ -160,5 +172,59 @@ impl PlayComponent {
         } else {
             bail!("invalid MQ message: {:?}", msg);
         }
+    }
+
+    async fn dispatch_timeout(
+        &mut self,
+        duration: std::time::Duration,
+        kind: TimerKind,
+    ) -> anyhow::Result<()> {
+        let snapshot = unwrap_as!(
+            self.broker
+                .call(
+                    ModuleName::Timer,
+                    TMProtoReq::NewTimeout { duration, kind }.into(),
+                )
+                .await?,
+            GProto::TMProtoAck
+        );
+        tracing::info!("[Play] new timeout timer: {:?}", snapshot);
+        Ok(())
+    }
+
+    async fn dispatch_interval(
+        &mut self,
+        duration: std::time::Duration,
+        kind: TimerKind,
+    ) -> anyhow::Result<()> {
+        let snapshot = unwrap_as!(
+            self.broker
+                .call(
+                    ModuleName::Timer,
+                    TMProtoReq::NewInterval { duration, kind }.into(),
+                )
+                .await?,
+            GProto::TMProtoAck
+        );
+        tracing::info!("[Play] new interval timer: {:?}", snapshot);
+        Ok(())
+    }
+
+    async fn dispatch_deadline(
+        &mut self,
+        deadline: std::time::Instant,
+        kind: TimerKind,
+    ) -> anyhow::Result<()> {
+        let snapshot = unwrap_as!(
+            self.broker
+                .call(
+                    ModuleName::Timer,
+                    TMProtoReq::NewDeadline { deadline, kind }.into(),
+                )
+                .await?,
+            GProto::TMProtoAck
+        );
+        tracing::info!("[Play] new deadline timer: {:?}", snapshot);
+        Ok(())
     }
 }

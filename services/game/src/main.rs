@@ -4,11 +4,11 @@ mod error;
 mod hub;
 mod nats;
 mod play;
+mod timer;
 use error::Error;
 use gsfw::gs;
 
 fn main() -> anyhow::Result<()> {
-
     let rt = tokio::runtime::Builder::new_multi_thread()
         .enable_io()
         .enable_time()
@@ -27,6 +27,7 @@ fn main() -> anyhow::Result<()> {
         gs::GameBuilder::new()
             .component(db::Builder::new().with_db(db))
             .component(nats::Builder::new().with_nats(nats_client))
+            .component(timer::Builder::new())
             .component(play::Builder::new().worker_num(1))
             .serve()?
             .await;

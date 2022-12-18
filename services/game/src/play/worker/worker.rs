@@ -30,7 +30,7 @@ impl Worker {
         }
     }
 
-    pub fn run(&mut self, close_rx: crossbeam_channel::Receiver<()>) -> anyhow::Result<()> {
+    pub fn run(&self, close_rx: crossbeam_channel::Receiver<()>) -> anyhow::Result<()> {
         let mut ref_playermgr = self.players.borrow_mut();
         loop {
             crossbeam_channel::select! {

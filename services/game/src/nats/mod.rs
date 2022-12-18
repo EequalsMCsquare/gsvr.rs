@@ -24,8 +24,8 @@ impl component::Component<Hub> for NatsComponent {
         ModuleName::Nats
     }
 
-    async fn init(&mut self) -> Result<(), Box<dyn StdError + Send>> {
-        Ok(())
+    async fn init(self: Box<Self>) -> Result<Box<dyn component::Component<Hub>>, Box<dyn StdError + Send>> {
+        Ok(self)
     }
 
     async fn run(mut self: Box<Self>) -> Result<(), Box<dyn StdError + Send>> {

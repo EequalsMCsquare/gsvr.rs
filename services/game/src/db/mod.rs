@@ -21,8 +21,10 @@ impl component::Component<Hub> for DBComponent {
         ModuleName::DB
     }
 
-    async fn init(&mut self) -> Result<(), Box<dyn StdError + Send>> {
-        Ok(())
+    async fn init(
+        self: Box<Self>,
+    ) -> Result<Box<dyn component::Component<Hub>>, Box<dyn StdError + Send>> {
+        Ok(self)
     }
 
     async fn run(self: Box<Self>) -> Result<(), Box<dyn StdError + Send>> {
@@ -32,22 +34,13 @@ impl component::Component<Hub> for DBComponent {
             if let Some(req) = rx.recv().await {
                 match req.payload() {
                     GProto::DBProtoReq(inner) => {
-                        req.ok(GProto::DBProtoAck(match inner {
-                            DBProtoReq::Find { kind, query } => match kind {
-                                FindKind::One => {
-                                    DBProtoAck::OneRow(query.fetch_one(&self.database).await)
-                                }
-                                FindKind::All => {
-                                    DBProtoAck::AllRow(query.fetch_all(&self.database).await)
-                                }
-                                FindKind::Option => {
-                                    DBProtoAck::OptRow(query.fetch_optional(&self.database).await)
-                                }
-                            },
-                            DBProtoReq::Exec(query) => {
-                                DBProtoAck::Exec(query.execute(&self.database).await)
+                        let ret = match inner {
+                            DBProtoReq::Find { kind, query } => {
+                                Self::ctl_find(&self.database, kind, query).await
                             }
-                        }));
+                            DBProtoReq::Exec(query) => Self::ctl_exec(&self.database, query).await,
+                        };
+                        req.ok(GProto::DBProtoAck(ret));
                     }
 
                     GProto::CtrlShutdown => return Ok(()),
