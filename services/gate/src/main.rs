@@ -9,8 +9,7 @@ use gsfw::network::{AgentService, Gate};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let c = conf::Config::parse("etc/gate")?;
-    util::logger::init(c.log);
-    tracing::info!("logger init complete");
+    let _guard = util::logger::init(c.log);
 
     let nats = util::nats::build(c.mq).await?;
     tracing::info!("NATS connected");

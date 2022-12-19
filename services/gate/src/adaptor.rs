@@ -108,7 +108,7 @@ impl Adaptor for NatsAdaptor {
                                 Err(err) => return Err(err),
                             };
                             self.cstopic = format!("csp.{}", self.player_id);
-                            tracing::debug!("player-{} normal login success", self.player_id);
+                            tracing::info!("player-{} normal login success", self.player_id);
                             Ok((stream, sink))
                         }
                         Err(err) => {
@@ -136,7 +136,7 @@ impl Adaptor for NatsAdaptor {
                             Err(err) => return Err(err),
                         };
                     self.cstopic = format!("csp.{}", self.player_id);
-                    tracing::debug!("player-{} fast login success", self.player_id);
+                    tracing::info!("player-{} fast login success", self.player_id);
                     Ok((stream, sink))
                 }
                 _unexpected => Err(anyhow!("unauthorized agent").into()),

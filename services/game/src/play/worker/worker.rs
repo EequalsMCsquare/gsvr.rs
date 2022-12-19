@@ -4,10 +4,17 @@ use crate::{
 };
 use std::{cell::RefCell, sync::atomic::AtomicU32};
 
+pub struct WorkerHandle {
+    pub close_tx: crossbeam_channel::Sender<()>,
+    pub wtx: crossbeam_channel::Sender<WProto>,
+    pub worker: Worker,
+}
+
 pub struct Worker {
     pcount: AtomicU32, // currently handle player count
     players: RefCell<PlayerMgr>,
     rx: crossbeam_channel::Receiver<WProto>,
+    close_rx: crossbeam_channel::Receiver<()>,
     ptx: crossbeam_channel::Sender<PMSG>,
 }
 
@@ -15,12 +22,14 @@ impl Worker {
     pub fn new(
         rx: crossbeam_channel::Receiver<WProto>,
         ptx: crossbeam_channel::Sender<PMSG>,
+        close_rx: crossbeam_channel::Receiver<()>
     ) -> Self {
         Self {
             pcount: 0.into(),
             players: Default::default(),
             rx,
             ptx,
+            close_rx,
         }
     }
 
@@ -30,7 +39,7 @@ impl Worker {
         }
     }
 
-    pub fn run(&self, close_rx: crossbeam_channel::Receiver<()>) -> anyhow::Result<()> {
+    pub fn run(&self) -> anyhow::Result<()> {
         let mut ref_playermgr = self.players.borrow_mut();
         loop {
             crossbeam_channel::select! {
@@ -48,7 +57,10 @@ impl Worker {
                         }
                     }
                 },
-                recv(close_rx) -> _ => return Ok(())
+                recv(self.close_rx) -> _ => {
+                    tracing::debug!("worker recv close signal");
+                    return Ok(())
+                }
             }
         }
     }

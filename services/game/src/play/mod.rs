@@ -7,6 +7,7 @@ use self::{
     player::{DBplayer, Player},
     playermgr::PlayerLoader,
     proto::WProto,
+    worker::WorkerHandle,
 };
 use crate::{
     hub::{ChanCtx, GProto, Hub, ModuleName, PMSG},
@@ -24,7 +25,8 @@ use tokio::sync::mpsc;
 use tracing::info;
 
 pub struct PlayComponent {
-    workers: Vec<(worker::Worker, crossbeam_channel::Sender<WProto>)>,
+    // workers: Vec<(worker::Worker, crossbeam_channel::Sender<WProto>)>,
+    workers: Vec<WorkerHandle>,
     pmsg_rx: crossbeam_channel::Receiver<PMSG>,
     rx: mpsc::Receiver<ChanCtx>,
     broker: Hub,
@@ -52,32 +54,43 @@ impl component::Component<Hub> for PlayComponent {
     ) -> Result<Box<dyn component::Component<Hub>>, Box<dyn StdError + Send>> {
         // register player message to mpsc::Receiver
         self.init_sub_pmsg().await?;
-        self.init_timers().await?;
+        // self.init_timers().await?;
         Ok(self)
     }
 }
 
 impl PlayComponent {
     async fn _single_worker_run(&mut self) -> anyhow::Result<()> {
-        let (worker, wtx) = self.workers.remove(0);
-        let (close_tx, close_rx) = crossbeam_channel::bounded::<()>(1);
+        let WorkerHandle {
+            worker,
+            wtx,
+            close_tx: wkr_close_tx,
+        } = self.workers.remove(0);
+        let (psc_close_tx, psc_close_rx) = crossbeam_channel::bounded::<()>(1);
+        // let (wkr_close_tx, wkr_close_rx) = crossbeam_channel::bounded::<()>(1);
+        let (pld_close_tx, pld_close_rx) = crossbeam_channel::bounded::<()>(1);
         // spawn running worker in a new thread
-        let close_rx1 = close_rx.clone();
-        let worker_handle = std::thread::spawn(move || worker.run(close_rx1));
+        let worker_handle = std::thread::spawn(move || worker.run());
         let psc_casttx = self.broker.cast_tx(ModuleName::Nats);
         // spawn thread to proxy PSC to nats
-        let close_rx1 = close_rx.clone();
         let prx = self.pmsg_rx.clone();
-        let psc_handle = std::thread::spawn(move || loop {
-            crossbeam_channel::select! {
-                recv(prx) -> msg => match msg {
-                    Ok(pmsg) => psc_casttx.blocking_cast(GProto::PMSG(pmsg)),
-                    Err(err) => {
-                        tracing::error!("[PSC thread]. {}", err);
-                        break;
+        let psc_span = tracing::info_span!("psc thread").or_current();
+        let psc_handle = std::thread::spawn(move || {
+            let _p = psc_span.enter();
+            loop {
+                crossbeam_channel::select! {
+                    recv(prx) -> msg => match msg {
+                        Ok(pmsg) => psc_casttx.blocking_cast(GProto::PMSG(pmsg)),
+                        Err(err) => {
+                            tracing::error!("recv psc error. {}", err);
+                            break;
+                        }
+                    },
+                    recv(psc_close_rx) -> _ => {
+                        tracing::debug!("psc thread recv close signal");
+                        return
                     }
-                },
-                recv(close_rx1) -> _ => return
+                }
             }
         });
         let (pltx, plrx) = crossbeam_channel::bounded::<PMSG>(1024);
@@ -86,7 +99,7 @@ impl PlayComponent {
             Arc::new(self.broker.call_tx(ModuleName::Play)),
             Arc::new(self.broker.cast_tx(ModuleName::Play)),
             plrx,
-            close_rx.clone(),
+            pld_close_rx,
         );
         let pload_handle = std::thread::spawn(move || pload.run());
 
@@ -104,7 +117,7 @@ impl PlayComponent {
                 }
                 GProto::PLProtoReq(inner) => match inner {
                     PLProtoReq::AddPlayer(player) => {
-                        tracing::debug!("add player to worker[0]");
+                        tracing::info!("add player to worker[0]");
                         self._pset.insert(player.pid);
                         // self.send_player_to_worker(player, 0);
                         wtx.send(WProto::AddPlayer(player)).unwrap();
@@ -112,32 +125,39 @@ impl PlayComponent {
                     }
                 },
                 GProto::TMProtoNtf(snapshot) => {
-                    tracing::debug!("[Game] timer trigger: {:#?}", snapshot);
+                    tracing::info!("[Game] timer trigger: {:#?}", snapshot);
                 }
                 GProto::CtrlShutdown => {
                     info!("[play] recv shutdown");
-                    close_tx.send(()).unwrap();
-                    worker_handle.join().expect("worker thread join fail.")?;
+
+                    pld_close_tx.send(()).unwrap();
                     pload_handle.join().expect("pload thread join fail")?;
+                    tracing::debug!("pload_handle join success");
+
+                    psc_close_tx.send(()).unwrap();
                     psc_handle.join().expect("psc thread join fail.");
+                    tracing::debug!("psc_handle join success");
+
+                    wkr_close_tx.send(()).unwrap();
+                    worker_handle.join().expect("worker thread join fail.")?;
+                    tracing::debug!("worker_handle join success");
+
                     return Ok(());
                 }
                 _unexpected => tracing::error!(
-                    "[play] recv unpexted ChanProto: {}",
+                    "recv unpexted ChanProto: {}",
                     Into::<&'static str>::into(_unexpected)
                 ),
             }
         }
-        Err(anyhow!("[play] no ProtoSender left"))
+        Err(anyhow!("no ProtoSender left. exit"))
     }
 
     async fn _multi_worker_run(&mut self) -> anyhow::Result<()> {
         todo!()
     }
 
-    async fn init_sub_pmsg(
-        &mut self,
-    ) -> anyhow::Result<()> {
+    async fn init_sub_pmsg(&mut self) -> anyhow::Result<()> {
         if let Err(err) = Broker::call(
             &self.broker,
             ModuleName::Nats,
@@ -148,13 +168,20 @@ impl PlayComponent {
         )
         .await
         {
-            return Err(anyhow!("fail to register player message to self broker. {}", err));
+            return Err(anyhow!(
+                "fail to register player message to self broker. {}",
+                err
+            ));
         }
         Ok(())
     }
 
-    async fn init_timers(&mut self) ->  anyhow::Result<()> {
-        self.dispatch_timeout(std::time::Duration::from_secs(5), TimerKind::GameDataLanding).await?;
+    async fn init_timers(&mut self) -> anyhow::Result<()> {
+        self.dispatch_interval(
+            std::time::Duration::from_secs(5),
+            TimerKind::GameDataLanding,
+        )
+        .await?;
         Ok(())
     }
 
@@ -188,7 +215,7 @@ impl PlayComponent {
                 .await?,
             GProto::TMProtoAck
         );
-        tracing::info!("[Play] new timeout timer: {:?}", snapshot);
+        tracing::debug!("dispatch new timeout timer: {:?}", snapshot);
         Ok(())
     }
 
@@ -206,7 +233,7 @@ impl PlayComponent {
                 .await?,
             GProto::TMProtoAck
         );
-        tracing::info!("[Play] new interval timer: {:?}", snapshot);
+        tracing::debug!("dispatch new interval timer: {:?}", snapshot);
         Ok(())
     }
 
@@ -224,7 +251,7 @@ impl PlayComponent {
                 .await?,
             GProto::TMProtoAck
         );
-        tracing::info!("[Play] new deadline timer: {:?}", snapshot);
+        tracing::debug!("dispatch new deadline timer: {:?}", snapshot);
         Ok(())
     }
 }

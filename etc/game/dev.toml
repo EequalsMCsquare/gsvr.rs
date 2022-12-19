@@ -1,2 +1,5 @@
 [database]
 db_name = "game"
+
+[log]
+output = "file:logs/game.log"

@@ -94,6 +94,7 @@ impl component::Component<Hub> for TimerComponet {
                                 Err(err) => req.err(err)
                             }
                         }
+                        GProto::CtrlShutdown => return Ok(()),
                         _unexpected => {
                             tracing::error!(
                                 "receive unhandled ChanProto. {}",

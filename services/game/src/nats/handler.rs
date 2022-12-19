@@ -13,7 +13,7 @@ impl NatsComponent {
         topic: String,
         decode_fn: fn(async_nats::Message) -> anyhow::Result<GProto>,
     ) -> Result<()> {
-        tracing::debug!("{:?} subscribe to {}", from , topic);
+        tracing::info!("{:?} subscribe to {}", from , topic);
         match self.nats.subscribe(topic).await {
             Ok(mut sub) => {
                 let func = decode_fn;

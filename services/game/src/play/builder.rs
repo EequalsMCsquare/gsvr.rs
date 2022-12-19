@@ -1,4 +1,7 @@
-use super::{worker::Worker, PlayComponent};
+use super::{
+    worker::{Worker, WorkerHandle},
+    PlayComponent,
+};
 use crate::hub::{ChanCtx, Hub, ModuleName};
 use gsfw::component;
 use tokio::sync::mpsc;
@@ -17,10 +20,20 @@ impl component::ComponentBuilder<Hub> for Builder {
             rx: self.rx.unwrap(),
             broker: self.brkr.unwrap(),
             _pset: Default::default(),
-            workers: vec![crossbeam_channel::bounded(4096); self.worker_num]
-                .into_iter()
-                .map(|(wtx, wrx)| (Worker::new(wrx, ptx.clone()), wtx))
-                .collect(),
+            workers: vec![
+                (
+                    crossbeam_channel::bounded(4096),
+                    crossbeam_channel::bounded(1)
+                );
+                self.worker_num
+            ]
+            .into_iter()
+            .map(|((wtx, wrx), (ctx, crx))| WorkerHandle {
+                close_tx: ctx,
+                wtx,
+                worker: Worker::new(wrx, ptx.clone(), crx),
+            })
+            .collect(),
             pmsg_rx: prx,
         })
     }

@@ -41,7 +41,7 @@ where
                     tracing::error!("fail to get token from header. {}", err);
                     super::ApiResult::UnAuth
                 })?;
-        tracing::debug!("token: {:?}", token);
+        tracing::info!("token: {:?}", token);
         let Extension(jwt): Extension<Jwt<Claim>> =
             Extension::from_request(req).await.map_err(|err| {
                 tracing::error!("fail to get Extension<Jwt<Claim>>. {}", err);

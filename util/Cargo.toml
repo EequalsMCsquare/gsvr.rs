@@ -13,7 +13,7 @@ tracing = {workspace = true}
 serde = { workspace = true }
 time ={ workspace = true  }
 sqlx = { workspace = true }
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "local-time"] }
 tracing-appender = {version = "^0.2.2"}
 jsonwebtoken = "8.1.1"
 pbkdf2 = "0.11.0"

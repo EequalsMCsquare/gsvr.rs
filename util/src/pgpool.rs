@@ -11,7 +11,7 @@ pub async fn build(cfg: ConfigDB) -> Result<sqlx::PgPool, sqlx::Error> {
         port = cfg.port,
         database = cfg.db_name.expect("database name must be provided")
     );
-    tracing::debug!("database connect string: {}", dbconn_str);
+    tracing::info!("database connect string: {}", dbconn_str);
     PgPoolOptions::new()
         .max_connections(cfg.max_conn.unwrap_or(10))
         .min_connections(cfg.min_conn.unwrap_or(1))

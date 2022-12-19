@@ -9,7 +9,7 @@ mod models;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let c = conf::Config::parse("etc/pf")?;
-    util::logger::init(c.log);
+    let _guard = util::logger::init(c.log);
     // database
     let db = util::pgpool::build(c.database).await?;
     tracing::info!("database connect success");

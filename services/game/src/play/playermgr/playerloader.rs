@@ -10,6 +10,8 @@ use dashmap::{DashMap, DashSet};
 use fxhash::FxBuildHasher;
 use gsfw::chanrpc::{CallTx, CastTx};
 use sqlx::FromRow;
+use tracing::{instrument, Instrument};
+
 
 pub struct PlayerLoader {
     loading_set: Arc<DashSet<i64, FxBuildHasher>>,
@@ -46,6 +48,7 @@ impl PlayerLoader {
         }
     }
 
+    #[instrument(level="info" skip(self) name="PlayerLoader")]
     pub fn run(self) -> anyhow::Result<()> {
         let rt = tokio::runtime::Builder::new_multi_thread()
             .worker_threads(4)
@@ -64,7 +67,7 @@ impl PlayerLoader {
                     }
                     // if the loading is already pended, just push the new PCS to the queue
                     if let Some(p) = self.pending_map.get(&cs.player_id) {
-                        tracing::debug!(
+                        tracing::info!(
                             "player{} is still loading, add new pcs to the queue",
                             cs.player_id
                         );
@@ -72,7 +75,7 @@ impl PlayerLoader {
                     } else {
                         // if new load request recv, create a new Pending with the incoming PCS,
                         // and then spawn a new coroutine to handle load response
-                        tracing::debug!("try to load player{} from database", cs.player_id);
+                        tracing::info!("try to load player{} from database", cs.player_id);
                         let player_id = cs.player_id;
                         let new_pcsq = SegQueue::new();
                         new_pcsq.push(cs);
@@ -112,7 +115,6 @@ impl PlayerLoader {
                                                     }
                                                 };
                                                 // ack Play module to add player
-                                                let pid = player.pid;
                                                 let ack = play_caller
                                                     .call(GProto::PLProtoReq(PLProtoReq::AddPlayer(player)))
                                                     .await;
@@ -127,7 +129,7 @@ impl PlayerLoader {
                                                         play_caster.cast(GProto::PMSG(pmsg)).await;
                                                     }
                                                     let end = time::Instant::now();
-                                                    tracing::debug!("player-{} loaded. time used: {}", pid, end-start);
+                                                    tracing::info!("loaded success. time used: {}", end-start);
                                                     // delay removing player loaded mark
                                                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
                                                     loading_set.remove(&player_id);
@@ -144,12 +146,15 @@ impl PlayerLoader {
                                 Ok(Err(err)) => tracing::error!("crate::Error: {}", err),
                                 Err(err) => tracing::error!("oneshot error: {}", err),
                             };
-                        };
+                        }.instrument(tracing::info_span!("loading player", player_id));
                         // spawn coroutine to handle loading
                         rt.spawn(fut);
                     }
                 },
-                recv(self.close_rx) -> _ => return Ok(())
+                recv(self.close_rx) -> _ => {
+                    tracing::debug!("pload recv close signal");
+                    return Ok(())
+                }
             }
         }
     }
