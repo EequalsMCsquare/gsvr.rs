@@ -19,7 +19,6 @@ impl component::ComponentBuilder<Hub> for Builder {
         Box::new(PlayComponent {
             rx: self.rx.unwrap(),
             broker: self.brkr.unwrap(),
-            _pset: Default::default(),
             workers: vec![
                 (
                     crossbeam_channel::bounded(4096),

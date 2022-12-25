@@ -607,9 +607,9 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-utils"
-version = "0.8.12"
+version = "0.8.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edbafec5fa1f196ca66527c1b12c2ec4745ca14b50f1ad8f9f6f720b55d11fac"
+checksum = "4fb766fa798726286dbbb842f174001dab8abc7b627a1dd86e0b7222a95d929f"
 dependencies = [
  "cfg-if",
 ]
@@ -1180,12 +1180,14 @@ dependencies = [
  "config",
  "crossbeam-channel",
  "crossbeam-queue",
+ "crossbeam-utils",
  "cspb",
  "dashmap",
  "futures",
  "fxhash",
  "gsfw",
  "hashbrown",
+ "once_cell",
  "parking_lot 0.12.1",
  "pin-project",
  "prost",
@@ -1448,6 +1450,7 @@ dependencies = [
 [[package]]
 name = "gsfw"
 version = "0.1.3"
+source = "git+https://github.com/EequalsMCsquare/gsfw.rs.git?branch=master#5909a2317f3259a042befc1f2a2c64ec7992d712"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1466,6 +1469,7 @@ dependencies = [
 [[package]]
 name = "gsfw-derive"
 version = "0.1.0"
+source = "git+https://github.com/EequalsMCsquare/gsfw.rs.git?branch=master#5909a2317f3259a042befc1f2a2c64ec7992d712"
 dependencies = [
  "anyhow",
  "darling 0.14.2",
@@ -1477,6 +1481,7 @@ dependencies = [
 [[package]]
 name = "gsfw-util"
 version = "0.1.1"
+source = "git+https://github.com/EequalsMCsquare/gsfw.rs.git?branch=master#5909a2317f3259a042befc1f2a2c64ec7992d712"
 dependencies = [
  "futures",
  "once_cell",

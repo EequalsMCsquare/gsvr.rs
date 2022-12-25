@@ -28,5 +28,7 @@ strum = { workspace = true }
 sqlx = { workspace = true }
 crossbeam-channel = "0.5.6"
 crossbeam-queue = "0.3.8"
+crossbeam-utils = "0.8.14"
 dashmap = "5.4.0"
 fxhash = "0.2.1"
+once_cell = "*"

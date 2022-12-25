@@ -2,7 +2,10 @@ use crate::{
     hub::PMSG,
     play::{playermgr::PlayerMgr, proto::WProto},
 };
-use std::{cell::RefCell, sync::atomic::AtomicU32};
+use std::{
+    cell::RefCell,
+    sync::{atomic::AtomicU32, Arc},
+};
 
 pub struct WorkerHandle {
     pub close_tx: crossbeam_channel::Sender<()>,
@@ -11,7 +14,7 @@ pub struct WorkerHandle {
 }
 
 pub struct Worker {
-    pcount: AtomicU32, // currently handle player count
+    pcount: Arc<AtomicU32>, // currently handle player count
     players: RefCell<PlayerMgr>,
     rx: crossbeam_channel::Receiver<WProto>,
     close_rx: crossbeam_channel::Receiver<()>,
@@ -22,15 +25,19 @@ impl Worker {
     pub fn new(
         rx: crossbeam_channel::Receiver<WProto>,
         ptx: crossbeam_channel::Sender<PMSG>,
-        close_rx: crossbeam_channel::Receiver<()>
+        close_rx: crossbeam_channel::Receiver<()>,
     ) -> Self {
         Self {
-            pcount: 0.into(),
+            pcount: Arc::new(0.into()),
             players: Default::default(),
             rx,
             ptx,
             close_rx,
         }
+    }
+
+    pub fn pcount(&self) -> Arc<AtomicU32> {
+        self.pcount.clone()
     }
 
     pub fn sendp(&self, player_id: i64, message: cspb::Registry) {
